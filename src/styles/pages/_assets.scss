@@ -1,0 +1,57 @@
+.css-1ibaqd6 {
+  width: 250px !important;
+}
+.css-15fbbbn-MuiDrawer-docked .MuiDrawer-paper{
+  width: 250px !important;
+}
+.css-1ibaqd6 .MuiDrawer-paper {
+  width: 250px !important;
+}
+
+.bg-slider {
+  background-size: cover;
+  background-position: center;
+background-image: url('/images/slide01.svg');
+}
+
+// @keyframes slider {
+//   0% {
+//   }
+//   33% {
+//     background-image: url('../../components/assets/images/slide02.svg');
+//   }
+//   66% {
+//     background-image: url('../../components/assets/images/slide01.svg');
+//   }
+//   100% {
+//     background-image: url('../../components/assets/images/slide03.svg');
+//   }
+ 
+// }
+// body{
+//   background-color: #ebf1f0 !important;
+// }
+
+// make scroll in the body has a smooth transition and style 
+body {
+  scroll-behavior: smooth;
+  background-color: #ebf1f0 !important;
+}
+// style the scrollbar 
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f0f0f0; /* Background of the scrollbar track */
+  border-radius: 6px; /* Rounded corners for the track */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #757575; /* Color of the scrollbar thumb */
+  border-radius: 6px; /* Rounded corners for the thumb */
+  border: 3px solid #f0f0f0; /* Creates some padding between the thumb and the track */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #eea2a2; /* Darker shade when hovered */
+}
