@@ -238,7 +238,8 @@ The project uses [Checkly](https://www.checklyhq.com/?utm_source=github&utm_medi
 
 To use Checkly, you must first create an account on [their website](https://www.checklyhq.com/?utm_source=github&utm_medium=sponsorship&utm_campaign=next-js-boilerplate). Once you have an account, you can set the `CHECKLY_API_KEY` environment variable in GitHub Actions by generating a new API key in the Checkly Dashboard. Additionally, you will need to define the `CHECKLY_ACCOUNT_ID`, which can also be found in your Checkly Dashboard under User Settings > General.
 
-To complete the setup, make sure to update the `checkly.config.ts` file with your own email address and production URL.
+<!-- To complete the setup, make sure to update the `checkly.config.ts` file with your own email address and production URL. -->
+
 
 ### Useful commands
 
