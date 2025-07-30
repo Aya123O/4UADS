@@ -83,8 +83,7 @@ export default function ProductsPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { Language } = useLanguage();
-  type LangType = keyof Product["name"];
-  const lang: LangType = Language as LangType;
+  const lang = Language as keyof Product["name"];
   const categorySlug = searchParams?.category_slug;
 
   // Pagination state
@@ -192,9 +191,9 @@ export default function ProductsPage({
       filtered.sort((a, b) => {
         switch (sortOption) {
           case "name-asc":
-            return a.name[Language].localeCompare(b.name[Language]);
+            return a.name[lang].localeCompare(b.name[lang]);
           case "name-desc":
-            return b.name[Language].localeCompare(a.name[Language]);
+            return b.name[lang].localeCompare(a.name[lang]);
           case "price-asc":
             return a.final_price - b.final_price;
           case "price-desc":
@@ -240,7 +239,7 @@ export default function ProductsPage({
 
   const handleWhatsAppClick = (product: Product) => {
     if (typeof window === "undefined") return;
-    const productName = product.name[Language];
+    const productName = product.name[lang];
     const currentUrl = window.location.href;
     const price = product.final_price.toLocaleString();
     const quantityText = selectedProduct ? `\n- ${Language === 'ar' ? 'الكمية' : 'Quantity'}: ${quantity}` : '';
@@ -455,7 +454,7 @@ Can you help me with the purchase?`;
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
               {categorySlug 
-                ? (singleCategoryProducts?.[0]?.name[Language] || 
+                ? (singleCategoryProducts?.[0]?.name[lang] || 
                   (Language === 'ar' ? 'المنتجات' : 'Products'))
                 : (Language === 'ar' ? 'المتجر' : 'Shop')}
             </h1>
@@ -746,7 +745,7 @@ Can you help me with the purchase?`;
                     <ProductCard 
                       key={product.id} 
                       product={product} 
-                      language={Language} 
+                      language={lang} 
                       isRTL={Language === 'ar'}
                       onQuickView={() => setSelectedProduct(product)}
                       onWhatsAppClick={() => handleWhatsAppClick(product)}
@@ -763,7 +762,7 @@ Can you help me with the purchase?`;
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                       <div>
                         <h3 className="text-lg font-bold text-gray-900">
-                          {categoryWithProducts.category.name[Language]}
+                          {categoryWithProducts.category.name[lang]}
                         </h3>
                         <p className="text-gray-500 mt-1">
                           {categoryWithProducts.products.length} {Language === 'ar' ? 'منتج' : 'products'}
@@ -795,7 +794,7 @@ Can you help me with the purchase?`;
                         <ProductCard 
                           key={product.id} 
                           product={product} 
-                          language={Language} 
+                          language={lang} 
                           isRTL={Language === 'ar'}
                           onQuickView={() => setSelectedProduct(product)}
                           onWhatsAppClick={() => handleWhatsAppClick(product)}
@@ -817,7 +816,7 @@ Can you help me with the purchase?`;
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold text-gray-900">
-                  {selectedProduct.name[Language]}
+                  {selectedProduct.name[lang]}
                 </h3>
                 <button 
                   onClick={() => {
@@ -834,7 +833,7 @@ Can you help me with the purchase?`;
                 <div className="bg-gray-100 rounded-lg overflow-hidden">
                   <img
                     src={selectedProduct.picture_url}
-                    alt={selectedProduct.name[Language]}
+                    alt={selectedProduct.name[lang]}
                     className="w-full h-auto object-cover"
                   />
                 </div>
@@ -926,7 +925,7 @@ Can you help me with the purchase?`;
 
 interface ProductCardProps {
   product: Product;
-  language: string;
+  language: keyof Product["name"];
   isRTL: boolean;
   onQuickView?: () => void;
   onWhatsAppClick?: () => void;

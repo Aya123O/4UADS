@@ -29,7 +29,33 @@ const content = {
   }
 };
 
-async function getSearchResults(query: string, lang: string) {
+interface SearchResult {
+  id: string | number;
+  name: string;
+  slug: string;
+  type: 'category' | 'product';
+  image_url: string | null;
+  category_id?: number;
+  price?: number;
+  discount?: number;
+  final_price?: number;
+  quantity?: number;
+  description?: {
+    ar: string;
+    en: string;
+  };
+  customer?: {
+    id: number;
+    name: string;
+    phone: string;
+    email: string;
+    picture_url: string;
+  };
+  created_at?: string;
+  views?: number;
+}
+
+async function getSearchResults(query: string, lang: string): Promise<SearchResult[]> {
   try {
     // First try the search API
     const searchResponse = await fetch(SEARCH_API, {
@@ -46,31 +72,7 @@ async function getSearchResults(query: string, lang: string) {
     if (searchResponse.ok) {
       const searchData = await searchResponse.json();
       
-      const results: Array<{
-        id: string | number;
-        name: string;
-        slug: string;
-        type: 'category' | 'product';
-        image_url: string | null;
-        category_id?: number;
-        price?: number;
-        discount?: number;
-        final_price?: number;
-        quantity?: number;
-        description?: {
-          ar: string;
-          en: string;
-        };
-        customer?: {
-          id: number;
-          name: string;
-          phone: string;
-          email: string;
-          picture_url: string;
-        };
-        created_at?: string;
-        views?: number;
-      }> = [];
+      const results: SearchResult[] = [];
       
       if (searchData.data?.categories && Array.isArray(searchData.data.categories)) {
         searchData.data.categories.forEach((category: any) => {
@@ -114,31 +116,7 @@ async function getSearchResults(query: string, lang: string) {
     const homeResponse = await fetch(HOME_PRODUCTS_API);
     if (homeResponse.ok) {
       const homeData = await homeResponse.json();
-      const results: Array<{
-        id: string | number;
-        name: string;
-        slug: string;
-        type: 'category' | 'product';
-        image_url: string | null;
-        category_id?: number;
-        price?: number;
-        discount?: number;
-        final_price?: number;
-        quantity?: number;
-        description?: {
-          ar: string;
-          en: string;
-        };
-        customer?: {
-          id: number;
-          name: string;
-          phone: string;
-          email: string;
-          picture_url: string;
-        };
-        created_at?: string;
-        views?: number;
-      }> = [];
+      const results: SearchResult[] = [];
       const categoryProductsMap: Record<number, any[]> = {};
 
       if (homeData.data && Array.isArray(homeData.data)) {
@@ -233,12 +211,22 @@ interface SearchPageProps {
   };
 }
 
+interface CategoryMapItem {
+  category: {
+    id: number;
+    slug: string;
+    name: { en: string; ar: string };
+    icon_url: string | null;
+  };
+  products: any[];
+}
+
 export default function SearchPage({ searchParams }: SearchPageProps) {
   const { Language } = useLanguage();
   const currentContent = content[Language];
   const query = searchParams.q || '';
   const [isLoading, setIsLoading] = React.useState(true);
-  const [searchResults, setSearchResults] = React.useState<any[]>([]);
+  const [searchResults, setSearchResults] = React.useState<SearchResult[]>([]);
   const [categoryProductsData, setCategoryProductsData] = React.useState<any[]>([]);
 
   React.useEffect(() => {
@@ -252,11 +240,12 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
       const products = results.filter(r => r.type === 'product');
       
       // Group products by category
-      const categoryMap: Record<number, any> = {};
+      const categoryMap: Record<number, CategoryMapItem> = {};
       categories.forEach(category => {
-        categoryMap[category.id] = {
+        const categoryId = Number(category.id);
+        categoryMap[categoryId] = {
           category: {
-            id: category.id,
+            id: categoryId,
             slug: category.slug,
             name: { en: category.name, ar: category.name },
             icon_url: category.image_url
@@ -267,21 +256,26 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
       
       // Add products to their categories
       products.forEach(product => {
-        if (product.category_id && categoryMap[product.category_id]) {
-          categoryMap[product.category_id].products.push({
-            id: product.id,
-            slug: product.slug,
-            name: { en: product.name, ar: product.name },
-            price: product.price,
-            discount: product.discount,
-            final_price: product.final_price,
-            quantity: product.quantity,
-            picture_url: product.image_url,
-            description: product.description,
-            customer: product.customer,
-            created_at: product.created_at,
-            views: product.views
-          });
+        const categoryId = product.category_id;
+        if (categoryId && categoryMap[categoryId]) {
+          // Safely access the category and push the product
+          const categoryItem = categoryMap[categoryId];
+          if (categoryItem) {
+            categoryItem.products.push({
+              id: product.id,
+              slug: product.slug,
+              name: { en: product.name, ar: product.name },
+              price: product.price,
+              discount: product.discount,
+              final_price: product.final_price,
+              quantity: product.quantity,
+              picture_url: product.image_url,
+              description: product.description,
+              customer: product.customer,
+              created_at: product.created_at,
+              views: product.views
+            });
+          }
         }
       });
       
@@ -357,7 +351,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <div className="container mx-auto px-4 py-8" dir={Language === "ar" ? "rtl" : "ltr"}>
       <div className="max-w-2xl mx-auto mb-8">
-       
+        {/* Search input removed as it wasn't functional in the original code */}
       </div>
 
       <h1 className="text-2xl font-bold mb-6">

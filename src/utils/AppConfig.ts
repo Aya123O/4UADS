@@ -1,11 +1,13 @@
-import type { LocalePrefix } from 'node_modules/next-intl/dist/types/src/routing/types';
+// src/utils/AppConfig.ts
+import type { LocalePrefix } from 'next-intl/routing';
 
-const localePrefix: LocalePrefix = 'never';
+const localePrefix: LocalePrefix = 'always'; // Valid options: 'as-needed' | 'always'
 
-// FIXME: Update this configuration file based on your project information
 export const AppConfig = {
   name: 'Nextjs Starter',
-  locales: ['en', 'ar'],
+  locales: ['en', 'ar'] as const,
   defaultLocale: 'en',
   localePrefix,
-};
+} as const;
+
+export type AppLocale = (typeof AppConfig.locales)[number];

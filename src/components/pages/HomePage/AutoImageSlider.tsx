@@ -66,16 +66,13 @@ const sliderContent = {
   }
 };
 
-type LanguageKey = keyof typeof sliderContent;
 type LanguageContent = typeof sliderContent['en'];
 
 export default function CompactCarImportGallery(): JSX.Element {
-  const { language } = useLanguage();
+  const { Language } = useLanguage();
   
-  // Safely get content with fallback to English
   const getContent = (): LanguageContent => {
-    const lang = language as LanguageKey;
-    return sliderContent[lang] || sliderContent.en;
+    return sliderContent[Language] || sliderContent.en;
   };
   
   const content = getContent();
@@ -156,7 +153,7 @@ export default function CompactCarImportGallery(): JSX.Element {
   }
 
   return (
-    <div className="relative w-full mx-auto overflow-hidden group" dir={language === "ar" ? "rtl" : "ltr"}>
+    <div className="relative w-full mx-auto overflow-hidden group" dir={Language === "ar" ? "rtl" : "ltr"}>
       <Swiper
         modules={[Navigation, Pagination, Autoplay, EffectCreative, Parallax]}
         spaceBetween={0}
@@ -175,7 +172,7 @@ export default function CompactCarImportGallery(): JSX.Element {
         pagination={{
           clickable: true,
           dynamicBullets: true,
-          renderBullet: (index, className) => {
+          renderBullet: (_index, className) => {
             return `<span class="${className} !w-2 !h-2 !bg-white !opacity-30 hover:!opacity-100 !mx-1 !transition-all !duration-300"></span>`;
           },
         }}
@@ -243,7 +240,7 @@ export default function CompactCarImportGallery(): JSX.Element {
                   style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
                 >
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-white">
-                    {image.title?.[language] || content.defaultTitle}
+                    {image.title?.[Language] || content.defaultTitle}
                   </span>
                 </motion.h2>
 
@@ -253,7 +250,7 @@ export default function CompactCarImportGallery(): JSX.Element {
                   transition={{ delay: 0.6, duration: 0.6 }}
                   className="text-sm md:text-base text-white/80 max-w-md mx-auto mb-4 font-light"
                 >
-                  {image.description?.[language] || content.defaultDescription}
+                  {image.description?.[Language] || content.defaultDescription}
                 </motion.p>
 
                 <motion.div
@@ -303,11 +300,11 @@ export default function CompactCarImportGallery(): JSX.Element {
 
       <motion.div
         whileHover={{ scale: 1.1 }}
-        className={`swiper-button-next !hidden md:!flex !h-12 !w-12 !rounded-full !bg-white/10 !backdrop-blur-sm !border !border-white/20 hover:!bg-white/20 !transition-all !duration-300 ${language === 'ar' ? '!left-6' : '!right-6'} after:!text-white after:!text-2xl after:!font-bold group-hover:!opacity-100 !opacity-0 shadow-lg`}
+        className={`swiper-button-next !hidden md:!flex !h-12 !w-12 !rounded-full !bg-white/10 !backdrop-blur-sm !border !border-white/20 hover:!bg-white/20 !transition-all !duration-300 ${Language === 'ar' ? '!left-6' : '!right-6'} after:!text-white after:!text-2xl after:!font-bold group-hover:!opacity-100 !opacity-0 shadow-lg`}
       ></motion.div>
       <motion.div
         whileHover={{ scale: 1.1 }}
-        className={`swiper-button-prev !hidden md:!flex !h-12 !w-12 !rounded-full !bg-white/10 !backdrop-blur-sm !border !border-white/20 hover:!bg-white/20 !transition-all !duration-300 ${language === 'ar' ? '!right-6' : '!left-6'} after:!text-white after:!text-2xl after:!font-bold group-hover:!opacity-100 !opacity-0 shadow-lg`}
+        className={`swiper-button-prev !hidden md:!flex !h-12 !w-12 !rounded-full !bg-white/10 !backdrop-blur-sm !border !border-white/20 hover:!bg-white/20 !transition-all !duration-300 ${Language === 'ar' ? '!right-6' : '!left-6'} after:!text-white after:!text-2xl after:!font-bold group-hover:!opacity-100 !opacity-0 shadow-lg`}
       ></motion.div>
 
       <motion.div
@@ -321,9 +318,11 @@ export default function CompactCarImportGallery(): JSX.Element {
           repeatType: "reverse",
           ease: "easeInOut"
         }}
-        className={`absolute bottom-6 ${language === 'ar' ? 'right-6' : 'left-6'} z-30 text-white/20 text-xs font-mono tracking-widest`}
+        className={`absolute bottom-6 ${Language === 'ar' ? 'right-6' : 'left-6'} z-30 text-white/20 text-xs font-mono tracking-widest`}
       >
         {content.watermark}
+ 
+ 
       </motion.div>
     </div>
   );

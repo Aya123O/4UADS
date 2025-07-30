@@ -281,7 +281,7 @@ export default function Header() {
   };
 
   const handleCategoryHover = (category: Category | null) => {
-    if (category?.sub_categories?.length > 0) {
+    if (category && category.sub_categories && category.sub_categories.length > 0) {
       setActiveCategory(category);
       setIsHovering(true);
     }
@@ -306,7 +306,7 @@ export default function Header() {
 
   const renderDesktopSubcategories = () => (
     <div className="hidden md:block">
-      {activeCategory && activeCategory.sub_categories.length > 0 && (
+      {activeCategory && activeCategory.sub_categories && activeCategory.sub_categories.length > 0 && (
         <div
           className="bg-white border-t border-gray-200 shadow-lg absolute left-0 right-0 z-40"
           onMouseEnter={() => setIsHovering(true)}
@@ -453,7 +453,7 @@ export default function Header() {
                   <ChevronDown className={`h-2.5 w-2.5 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
                 </Button>
                 
-                {isCityDropdownOpen && selectedCountry && (
+                {isCityDropdownOpen && selectedCountry && selectedCountry.cities && (
                   <div className={`absolute ${Language === 'ar' ? 'right-0' : 'left-0'} mt-1 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 max-h-60 overflow-auto`}>
                     <div className="py-1">
                       {selectedCountry.cities.map((city) => (

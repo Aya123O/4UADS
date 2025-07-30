@@ -1,6 +1,10 @@
 export default function AdsPage() {
   return (
-    <div>الإعلانات هنا</div>
+    <div>
+      <h1>الإعلانات</h1>
+      <p>قائمة الإعلانات المتاحة.</p>
+      {/* You can add more content or components related to ads here */}
+    </div>
   );
 }
 
