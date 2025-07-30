@@ -240,9 +240,8 @@ export default function ProductsPage({
 
   const handleWhatsAppClick = (product: Product) => {
     if (typeof window === "undefined") return;
-    const productName = product.name[lang];
-    const currentUrl = window.location.href;
     const productName = product.name[Language];
+    const currentUrl = window.location.href;
     const price = product.final_price.toLocaleString();
     const quantityText = selectedProduct ? `\n- ${Language === 'ar' ? 'الكمية' : 'Quantity'}: ${quantity}` : '';
     const totalPrice = selectedProduct ? `\n- ${Language === 'ar' ? 'المجموع' : 'Total'}: ${(quantity * product.final_price).toLocaleString()} ${Language === 'ar' ? 'ر.س' : 'SAR'}` : '';
