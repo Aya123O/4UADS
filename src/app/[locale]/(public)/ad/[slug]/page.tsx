@@ -7,7 +7,7 @@ export const metadata = {
 export default async function Index() {
   return (
     <div>
-      <AdPage slug="" />
+      <AdPage  />
     </div>
   );
-}
+}                                                       

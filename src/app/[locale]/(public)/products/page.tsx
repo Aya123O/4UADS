@@ -83,6 +83,8 @@ export default function ProductsPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { Language } = useLanguage();
+  type LangType = keyof Product["name"];
+  const lang: LangType = Language as LangType;
   const categorySlug = searchParams?.category_slug;
 
   // Pagination state
@@ -238,7 +240,7 @@ export default function ProductsPage({
 
   const handleWhatsAppClick = (product: Product) => {
     if (typeof window === "undefined") return;
-
+    const productName = product.name[lang];
     const currentUrl = window.location.href;
     const productName = product.name[Language];
     const price = product.final_price.toLocaleString();
