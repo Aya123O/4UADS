@@ -1,4 +1,4 @@
-import AdsPage from "@/components/pages/Ads/AdsPage";
+import AdsPage from "../../../../components/pages/ads/page";
 export const metadata = {
   title: "الإعلانات",
   description: "الإعلانات",
