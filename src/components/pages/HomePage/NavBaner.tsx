@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { ChevronDown, Menu, X, Home, Car, ShoppingCart, Wrench, GasPump, Calendar, Star, Shield, TrendingUp } from "lucide-react";
+import { ChevronDown, Menu, X, Home, Car, ShoppingCart, Wrench, Fuel, Calendar, Star, Shield, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/Context/LanguageContext";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,11 +31,12 @@ const defaultIcons: Record<string, React.ReactNode> = {
   'cars': <Car className="w-5 h-5" />,
   'parts': <Wrench className="w-5 h-5" />,
   'accessories': <ShoppingCart className="w-5 h-5" />,
-  'services': <GasPump className="w-5 h-5" />,
+  'services': <Fuel className="w-5 h-5" />,
   'new': <Star className="w-5 h-5" />,
   'used': <TrendingUp className="w-5 h-5" />,
   'warranty': <Shield className="w-5 h-5" />,
-  'events': <Calendar className="w-5 h-5" />
+  'events': <Calendar className="w-5 h-5" />,
+  'default': <Car className="w-5 h-5" />
 };
 
 export default function NavBanner() {
@@ -123,8 +124,8 @@ export default function NavBanner() {
   }, [pathname]);
 
   const getCategoryIcon = (slug: string) => {
-    const key = slug.toLowerCase().split('-')[0];
-    return defaultIcons[key] || <Car className="w-5 h-5" />;
+    const key = slug.toLowerCase().split('-')[0] || 'default';
+    return defaultIcons[key] || defaultIcons['default'];
   };
 
   const renderDesktopCategories = () => (
