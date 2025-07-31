@@ -521,30 +521,42 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Main Header - White with Green Accents */}
       <div className="border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between py-3 gap-4">
-            <Link href="/" className="flex-shrink-0">
-              {loading ? (
-                <Skeleton className="h-9 w-28 rounded" />
-              ) : businessInfo?.business_logo_url ? (
-                <div className="relative h-9 w-28">
-                  <Image
-                    src={businessInfo.business_logo_url}
-                    alt={businessInfo.business_name?.[Language] || "4YOUAD"}
-                    fill
-                    className="object-contain"
-                    priority
-                    sizes="(max-width: 768px) 100vw, 112px"
-                  />
-                </div>
-              ) : (
-                <h1 className="text-lg font-bold text-green-600">
-                  {businessInfo?.business_name?.[Language] || "4YOUAD"}
-                </h1>
-              )}
-            </Link>
+           <Link href="/" className="flex-shrink-0 flex items-center gap-3">
+  {loading ? (
+    <div className="flex items-center gap-3">
+      <Skeleton className="h-12 w-12 rounded-full" />
+      <Skeleton className="h-5 w-32 rounded" />
+    </div>
+  ) : businessInfo?.business_logo_url ? (
+    <div className="flex items-center gap-3">
+      <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-green-500 transition-all duration-300 hover:scale-105">
+        <Image
+          src={businessInfo.business_logo_url}
+          alt={businessInfo.business_name?.[Language] || "4YOUAD"}
+          width={48}
+          height={48}
+          className="object-cover w-full h-full"
+          priority
+        />
+      </div>
+      <span className="text-lg font-bold text-gray-800 hidden sm:block">
+        {businessInfo.business_name?.[Language] || "4YOUAD"}
+      </span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-3">
+      <div className="h-12 w-12 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold">
+        4Y
+      </div>
+      <span className="text-lg font-bold text-gray-800 hidden sm:block">
+        {businessInfo?.business_name?.[Language] || "4YOUAD"}
+      </span>
+    </div>
+  )}
+</Link>
 
             <div className="flex-1 max-w-2xl mx-3 relative">
               <form onSubmit={handleSearchSubmit}>
@@ -662,39 +674,7 @@ export default function Header() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Navigation Bar - Dark with Green Hover */}
-      <nav 
-        className="w-full bg-gray-900 text-white shadow-sm relative z-40" 
-        dir={Language === "ar" ? "rtl" : "ltr"}
-      >
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-12">
-            <div className="flex items-center space-x-4">
-              {categories.slice(0, 8).map((category) => (
-                <div 
-                  key={category.id} 
-                  className="relative"
-                  onMouseEnter={() => handleCategoryHover(category)}
-                  onMouseLeave={handleCategoryLeave}
-                >
-                  <Link
-                    href={`/products/${category.slug}`}
-                    className={`px-2 py-2 text-sm font-medium flex items-center ${activeCategory?.id === category.id ? 'text-green-400' : 'text-white hover:text-green-400'} transition-colors`}
-                  >
-                    {category.name[Language]}
-                    {category.sub_categories && category.sub_categories.length > 0 && (
-                      <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${activeCategory?.id === category.id ? 'rotate-180' : ''}`} />
-                    )}
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        {renderDesktopSubcategories()}
-      </nav>
+      </div>     
     </header>
   );
 }
