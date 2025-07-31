@@ -126,6 +126,17 @@ export default function Header() {
   const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
   const router = useRouter();
 
+  // Color scheme
+  const colors = {
+    primary: '#E53E3E', // Red
+    secondary: '#38A169', // Green
+    dark: '#1A202C', // Dark gray/black
+    light: '#F7FAFC', // Light gray
+    accent: '#F6AD55', // Orange for accents
+    text: '#2D3748', // Dark text
+    textLight: '#718096', // Light text
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -318,7 +329,7 @@ export default function Header() {
                 <Link
                   key={subcategory.id}
                   href={`/products/${subcategory.slug}`}
-                  className="group flex flex-col items-center text-sm font-medium text-gray-600 hover:text-primary transition duration-150 ease-in-out p-2 rounded-md hover:bg-primary/5"
+                  className="group flex flex-col items-center text-sm font-medium text-gray-600 hover:text-primary transition duration-150 ease-in-out p-2 rounded-md hover:bg-gray-50"
                 >
                   {subcategory.icon_url ? (
                     <div className="w-10 h-10 mb-1.5 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -348,8 +359,8 @@ export default function Header() {
       className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-white'}`}
       dir={Language === "ar" ? "rtl" : "ltr"}
     >
-      {/* Top Contact Bar */}
-      <div className="bg-gray-900 text-gray-100 text-xs py-2 px-4">
+      {/* Top Contact Bar - Red */}
+      <div className="bg-gradient-to-r from-red-700 to-red-600 text-white text-xs py-2 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           <div className="flex items-center flex-wrap justify-center gap-x-4 gap-y-1">
             {businessInfo?.business_phone && (
@@ -357,7 +368,7 @@ export default function Header() {
                 href={`tel:${businessInfo.business_phone}`}
                 className="flex items-center gap-1 hover:text-white transition-colors"
               >
-                <Phone className="h-3 w-3 text-blue-400" />
+                <Phone className="h-3 w-3 text-white opacity-80" />
                 <span>{businessInfo.business_phone}</span>
               </a>
             )}
@@ -366,13 +377,13 @@ export default function Header() {
                 href={`mailto:${businessInfo.business_email}`}
                 className="flex items-center gap-1 hover:text-white transition-colors"
               >
-                <Mail className="h-3 w-3 text-blue-400" />
+                <Mail className="h-3 w-3 text-white opacity-80" />
                 <span>{businessInfo.business_email}</span>
               </a>
             )}
             {businessInfo?.business_address && (
               <div className="flex items-center gap-1">
-                <MapPin className="h-3 w-3 text-blue-400" />
+                <MapPin className="h-3 w-3 text-white opacity-80" />
                 <span className="truncate max-w-[160px]">{businessInfo.business_address[Language]}</span>
               </div>
             )}
@@ -386,7 +397,7 @@ export default function Header() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-300 hover:text-white transition-colors"
+                  className="text-white hover:opacity-80 transition-opacity"
                   aria-label={link.platform}
                 >
                   {link.platform === 'facebook' ? (
@@ -402,13 +413,13 @@ export default function Header() {
               ))}
             </div>
 
-            <div className="flex items-center gap-1 border-l border-gray-700 pl-2 ml-1">
+            <div className="flex items-center gap-1 border-l border-red-400 pl-2 ml-1">
               <div className="relative">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={toggleCountryDropdown}
-                  className="text-gray-200 hover:bg-gray-800 hover:text-white flex items-center gap-1 px-1 h-6"
+                  className="text-white hover:bg-red-500 hover:text-white flex items-center gap-1 px-1 h-6"
                 >
                   <span className="text-xs truncate max-w-[70px]">
                     {selectedCountry ? selectedCountry.name[Language] : currentContent.selectCountry}
@@ -425,7 +436,7 @@ export default function Header() {
                           onClick={() => handleSelectCountry(country)}
                           className={`block w-full text-left px-2 py-1.5 text-xs ${
                             selectedCountry?.id === country.id 
-                              ? 'bg-blue-50 text-blue-700' 
+                              ? 'bg-red-50 text-red-700' 
                               : 'text-gray-700 hover:bg-gray-100'
                           }`}
                         >
@@ -443,7 +454,7 @@ export default function Header() {
                   size="sm"
                   onClick={toggleCityDropdown}
                   disabled={!selectedCountry}
-                  className={`text-gray-200 hover:bg-gray-800 hover:text-white flex items-center gap-1 px-1 h-6 ${
+                  className={`text-white hover:bg-red-500 hover:text-white flex items-center gap-1 px-1 h-6 ${
                     !selectedCountry ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -462,7 +473,7 @@ export default function Header() {
                           onClick={() => handleSelectCity(city)}
                           className={`block w-full text-left px-2 py-1.5 text-xs ${
                             selectedCity?.id === city.id 
-                              ? 'bg-blue-50 text-blue-700' 
+                              ? 'bg-red-50 text-red-700' 
                               : 'text-gray-700 hover:bg-gray-100'
                           }`}
                         >
@@ -475,12 +486,12 @@ export default function Header() {
               </div>
             </div>
 
-            <div className="relative border-l border-gray-700 pl-2 ml-1">
+            <div className="relative border-l border-red-400 pl-2 ml-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={toggleLanguageDropdown}
-                className="text-gray-200 hover:bg-gray-800 hover:text-white flex items-center gap-1 px-1 h-6"
+                className="text-white hover:bg-red-500 hover:text-white flex items-center gap-1 px-1 h-6"
               >
                 <Globe className="h-3 w-3" />
                 <span className="text-xs">{Language === "ar" ? "العربية" : "English"}</span>
@@ -492,13 +503,13 @@ export default function Header() {
                   <div className="py-1">
                     <button
                       onClick={() => changeLanguage("en")}
-                      className={`block w-full text-left px-2 py-1.5 text-xs ${Language === 'en' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                      className={`block w-full text-left px-2 py-1.5 text-xs ${Language === 'en' ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-gray-100'}`}
                     >
                       English
                     </button>
                     <button
                       onClick={() => changeLanguage("ar")}
-                      className={`block w-full text-left px-2 py-1.5 text-xs ${Language === 'ar' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                      className={`block w-full text-left px-2 py-1.5 text-xs ${Language === 'ar' ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-gray-100'}`}
                     >
                       العربية
                     </button>
@@ -510,8 +521,8 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Main Header */}
-      <div className="border-b border-gray-100">
+      {/* Main Header - White with Green Accents */}
+      <div className="border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between py-3 gap-4">
             <Link href="/" className="flex-shrink-0">
@@ -529,7 +540,7 @@ export default function Header() {
                   />
                 </div>
               ) : (
-                <h1 className="text-lg font-bold text-blue-600">
+                <h1 className="text-lg font-bold text-green-600">
                   {businessInfo?.business_name?.[Language] || "4YOUAD"}
                 </h1>
               )}
@@ -548,13 +559,13 @@ export default function Header() {
                     onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
                     onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
                     placeholder={currentContent.searchPlaceholder}
-                    className="w-full pl-9 pr-20 py-2 text-xs rounded-full border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm hover:border-gray-400 transition-colors"
+                    className="w-full pl-9 pr-20 py-2 text-xs rounded-full border-gray-300 focus:ring-2 focus:ring-green-500 shadow-sm hover:border-gray-400 transition-colors"
                   />
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                   <Button 
                     type="submit"
                     variant="default" 
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 h-6 px-3 text-xs shadow-sm rounded-full"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-green-600 hover:bg-green-700 h-6 px-3 text-xs shadow-sm rounded-full"
                   >
                     {Language === 'ar' ? 'بحث' : 'Search'}
                   </Button>
@@ -562,7 +573,7 @@ export default function Header() {
               </form>
 
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-md border border-gray-200 z-50 max-h-72 overflow-y-auto transition-all duration-150 ease-in-out">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto transition-all duration-150 ease-in-out">
                   <div className="divide-y divide-gray-100">
                     {searchResults.some(r => r.type === 'category') && (
                       <div>
@@ -576,7 +587,7 @@ export default function Header() {
                               <Link
                                 key={`cat-${result.id}`}
                                 href={`/products/${result.slug}`}
-                                className="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-blue-50 transition-colors"
+                                className="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-green-50 transition-colors"
                               >
                                 {result.image_url ? (
                                   <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
@@ -610,7 +621,7 @@ export default function Header() {
                               <Link
                                 key={`prod-${result.id}`}
                                 href={`/product/${result.slug}`}
-                                className="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-blue-50 transition-colors"
+                                className="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-green-50 transition-colors"
                               >
                                 {result.image_url ? (
                                   <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
@@ -639,13 +650,13 @@ export default function Header() {
             <div className="flex lg:hidden items-center">
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-100 focus:outline-none transition-colors"
+                className="p-1 rounded-md text-gray-600 hover:text-green-600 hover:bg-gray-100 focus:outline-none transition-colors"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 ) : (
-                  <Menu className="h-4 w-4" />
+                  <Menu className="h-5 w-5" />
                 )}
               </button>
             </div>
@@ -653,7 +664,35 @@ export default function Header() {
         </div>
       </div>
 
-      <nav className="w-full bg-white border-b border-gray-100 shadow-sm relative z-40" dir={Language === "ar" ? "rtl" : "ltr"}>
+      {/* Navigation Bar - Dark with Green Hover */}
+      <nav 
+        className="w-full bg-gray-900 text-white shadow-sm relative z-40" 
+        dir={Language === "ar" ? "rtl" : "ltr"}
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-12">
+            <div className="flex items-center space-x-4">
+              {categories.slice(0, 8).map((category) => (
+                <div 
+                  key={category.id} 
+                  className="relative"
+                  onMouseEnter={() => handleCategoryHover(category)}
+                  onMouseLeave={handleCategoryLeave}
+                >
+                  <Link
+                    href={`/products/${category.slug}`}
+                    className={`px-2 py-2 text-sm font-medium flex items-center ${activeCategory?.id === category.id ? 'text-green-400' : 'text-white hover:text-green-400'} transition-colors`}
+                  >
+                    {category.name[Language]}
+                    {category.sub_categories && category.sub_categories.length > 0 && (
+                      <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${activeCategory?.id === category.id ? 'rotate-180' : ''}`} />
+                    )}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
         {renderDesktopSubcategories()}
       </nav>
     </header>
