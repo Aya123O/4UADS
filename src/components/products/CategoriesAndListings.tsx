@@ -105,6 +105,79 @@ export default function CategoriesAndListings({
     return stars;
   };
 
+  const ProductCard = ({ product }: { product: Product }) => (
+    <div 
+      className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 relative"
+      onClick={() => navigateToProduct(product.slug)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && navigateToProduct(product.slug)}
+      aria-label={`View ${product.name[Language]} details`}
+    >
+      <div className="relative aspect-square overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
+        <img
+          src={product.picture_url}
+          alt={product.name[Language]}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+        />
+        {product.discount > 0 && (
+          <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-20">
+            {Language === "ar" ? "خصم" : "Sale"} {product.discount}%
+          </div>
+        )}
+      </div>
+
+      <div className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-bold text-gray-900 line-clamp-2 text-lg">
+            {product.name[Language]}
+          </h3>
+          <div className="flex flex-col items-end">
+            <span className="font-bold text-xl text-gray-900">
+              {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
+            </span>
+            {product.discount > 0 && (
+              <span className="text-sm text-gray-500 line-through">
+                {product.price} {Language === "ar" ? "ج.م" : "EGP"}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {product.rating && (
+          <div className="flex items-center gap-1 mb-4">
+            {renderStars(product.rating)}
+            <span className="text-xs text-gray-500 ml-1">
+              ({product.rating.toFixed(1)})
+            </span>
+          </div>
+        )}
+
+        <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+          <span className="text-sm text-gray-500">
+            {Language === "ar" ? "الكمية:" : "Qty:"}{" "}
+            <span className="font-medium">{product.quantity}</span>
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-sm h-9 border-red-100 hover:bg-red-50 hover:text-red-600 text-red-500 rounded-lg transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigateToProduct(product.slug);
+            }}
+          >
+            {Language === "ar" ? "التفاصيل" : "Details"}
+          </Button>
+        </div>
+      </div>
+      {/* Add a subtle overlay for better hover effect */}
+<div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br from-gray-100 to-black transition-opacity duration-300 pointer-events-none"></div>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -171,70 +244,7 @@ export default function CategoriesAndListings({
 
           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {products.map((product, index) => (
-              <div
-                key={index}
-                className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                onClick={() => navigateToProduct(product.slug)}
-              >
-                <div className="relative aspect-square overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
-                  <img
-                    src={product.picture_url}
-                    alt={product.name[Language]}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  {product.discount > 0 && (
-                    <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-20">
-                      {Language === "ar" ? "خصم" : "Sale"} {product.discount}%
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-bold text-gray-900 line-clamp-2 text-lg">
-                      {product.name[Language]}
-                    </h3>
-                    <div className="flex flex-col items-end">
-                      <span className="font-bold text-xl text-gray-900">
-                        {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
-                      </span>
-                      {product.discount > 0 && (
-                        <span className="text-sm text-gray-500 line-through">
-                          {product.price} {Language === "ar" ? "ج.م" : "EGP"}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {product.rating && (
-                    <div className="flex items-center gap-1 mb-4">
-                      {renderStars(product.rating)}
-                      <span className="text-xs text-gray-500 ml-1">
-                        ({product.rating.toFixed(1)})
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                    <span className="text-sm text-gray-500">
-                      {Language === "ar" ? "الكمية:" : "Qty:"}{" "}
-                      <span className="font-medium">{product.quantity}</span>
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-sm h-9 border-red-100 hover:bg-red-50 hover:text-red-600 text-red-500 rounded-lg"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigateToProduct(product.slug);
-                      }}
-                    >
-                      {Language === "ar" ? "التفاصيل" : "Details"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <ProductCard key={index} product={product} />
             ))}
           </div>
         </section>
@@ -257,70 +267,7 @@ export default function CategoriesAndListings({
 
           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {allProducts.map((product, index) => (
-              <div
-                key={index}
-                className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                onClick={() => navigateToProduct(product.slug)}
-              >
-                <div className="relative aspect-square overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
-                  <img
-                    src={product.picture_url}
-                    alt={product.name[Language]}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  {product.discount > 0 && (
-                    <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-20">
-                      {Language === "ar" ? "خصم" : "Sale"} {product.discount}%
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-bold text-gray-900 line-clamp-2 text-lg">
-                      {product.name[Language]}
-                    </h3>
-                    <div className="flex flex-col items-end">
-                      <span className="font-bold text-xl text-gray-900">
-                        {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
-                      </span>
-                      {product.discount > 0 && (
-                        <span className="text-sm text-gray-500 line-through">
-                          {product.price} {Language === "ar" ? "ج.م" : "EGP"}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {product.rating && (
-                    <div className="flex items-center gap-1 mb-4">
-                      {renderStars(product.rating)}
-                      <span className="text-xs text-gray-500 ml-1">
-                        ({product.rating.toFixed(1)})
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                    <span className="text-sm text-gray-500">
-                      {Language === "ar" ? "الكمية:" : "Qty:"}{" "}
-                      <span className="font-medium">{product.quantity}</span>
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-sm h-9 border-red-100 hover:bg-red-50 hover:text-red-600 text-red-500 rounded-lg"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigateToProduct(product.slug);
-                      }}
-                    >
-                      {Language === "ar" ? "التفاصيل" : "Details"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <ProductCard key={index} product={product} />
             ))}
           </div>
         </section>
@@ -400,70 +347,7 @@ export default function CategoriesAndListings({
 
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {categoryWithProducts.products.map((product, index) => (
-                <div
-                  key={index}
-                  className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                  onClick={() => navigateToProduct(product.slug)}
-                >
-                  <div className="relative aspect-square overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
-                    <img
-                      src={product.picture_url}
-                      alt={product.name[Language]}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    {product.discount > 0 && (
-                      <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-20">
-                        {Language === "ar" ? "خصم" : "Sale"} {product.discount}%
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-bold text-gray-900 line-clamp-2 text-lg">
-                        {product.name[Language]}
-                      </h3>
-                      <div className="flex flex-col items-end">
-                        <span className="font-bold text-xl text-gray-900">
-                          {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
-                        </span>
-                        {product.discount > 0 && (
-                          <span className="text-sm text-gray-500 line-through">
-                            {product.price} {Language === "ar" ? "ج.م" : "EGP"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {product.rating && (
-                      <div className="flex items-center gap-1 mb-4">
-                        {renderStars(product.rating)}
-                        <span className="text-xs text-gray-500 ml-1">
-                          ({product.rating.toFixed(1)})
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                      <span className="text-sm text-gray-500">
-                        {Language === "ar" ? "الكمية:" : "Qty:"}{" "}
-                        <span className="font-medium">{product.quantity}</span>
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-sm h-9 border-red-100 hover:bg-red-50 hover:text-red-600 text-red-500 rounded-lg"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigateToProduct(product.slug);
-                        }}
-                      >
-                        {Language === "ar" ? "التفاصيل" : "Details"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={index} product={product} />
               ))}
             </div>
           </section>
@@ -532,70 +416,7 @@ export default function CategoriesAndListings({
 
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {categoryWithProducts.products.map((product, index) => (
-                <div
-                  key={index}
-                  className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                  onClick={() => navigateToProduct(product.slug)}
-                >
-                  <div className="relative aspect-square overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
-                    <img
-                      src={product.picture_url}
-                      alt={product.name[Language]}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    {product.discount > 0 && (
-                      <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-20">
-                        {Language === "ar" ? "خصم" : "Sale"} {product.discount}%
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-bold text-gray-900 line-clamp-2 text-lg">
-                        {product.name[Language]}
-                      </h3>
-                      <div className="flex flex-col items-end">
-                        <span className="font-bold text-xl text-gray-900">
-                          {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
-                        </span>
-                        {product.discount > 0 && (
-                          <span className="text-sm text-gray-500 line-through">
-                            {product.price} {Language === "ar" ? "ج.م" : "EGP"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {product.rating && (
-                      <div className="flex items-center gap-1 mb-4">
-                        {renderStars(product.rating)}
-                        <span className="text-xs text-gray-500 ml-1">
-                          ({product.rating.toFixed(1)})
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                      <span className="text-sm text-gray-500">
-                        {Language === "ar" ? "الكمية:" : "Qty:"}{" "}
-                        <span className="font-medium">{product.quantity}</span>
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-sm h-9 border-red-100 hover:bg-red-50 hover:text-red-600 text-red-500 rounded-lg"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigateToProduct(product.slug);
-                        }}
-                      >
-                        {Language === "ar" ? "التفاصيل" : "Details"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={index} product={product} />
               ))}
             </div>
           </section>

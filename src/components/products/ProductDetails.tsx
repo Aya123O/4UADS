@@ -848,13 +848,7 @@ Can you confirm the order?`;
                     <Phone className="w-4 h-4" />
                     {Language === "ar" ? "اتصال" : "Call"}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-2 border-gray-200 hover:bg-gray-50"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    {Language === "ar" ? "رسالة" : "Message"}
-                  </Button>
+                 
                   <Button 
                     variant="outline" 
                     className="flex items-center gap-2 border-gray-200 hover:bg-gray-50"

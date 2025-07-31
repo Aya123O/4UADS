@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { ChevronDown, Menu, X, Home } from "lucide-react";
+import { ChevronDown, Menu, X, Home, Car, ShoppingCart, Wrench, GasPump, Calendar, Star, Shield, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/Context/LanguageContext";
 import { usePathname, useRouter } from "next/navigation";
@@ -26,6 +26,17 @@ interface Subcategory {
   parent_id: number;
   icon_url: string | null;
 }
+
+const defaultIcons: Record<string, React.ReactNode> = {
+  'cars': <Car className="w-5 h-5" />,
+  'parts': <Wrench className="w-5 h-5" />,
+  'accessories': <ShoppingCart className="w-5 h-5" />,
+  'services': <GasPump className="w-5 h-5" />,
+  'new': <Star className="w-5 h-5" />,
+  'used': <TrendingUp className="w-5 h-5" />,
+  'warranty': <Shield className="w-5 h-5" />,
+  'events': <Calendar className="w-5 h-5" />
+};
 
 export default function NavBanner() {
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
@@ -111,22 +122,27 @@ export default function NavBanner() {
     closeAllMenus();
   }, [pathname]);
 
+  const getCategoryIcon = (slug: string) => {
+    const key = slug.toLowerCase().split('-')[0];
+    return defaultIcons[key] || <Car className="w-5 h-5" />;
+  };
+
   const renderDesktopCategories = () => (
-    <div className="hidden md:flex items-center justify-center flex-wrap gap-1 lg:gap-3 py-3 relative">
+    <div className="hidden md:flex items-center justify-center gap-1 lg:gap-2 py-3 relative">
       {/* Enhanced Home Button */}
-      <div className="relative group">
+      <div className="relative group mr-2">
         <Button
           variant="ghost"
-          className="text-sm lg:text-base font-medium py-2 px-3 lg:px-4 whitespace-nowrap transition-all duration-300 ease-in-out hover:text-blue-600 rounded-lg group bg-gradient-to-b from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 border border-gray-200 hover:border-blue-300 shadow-sm"
+          className="text-sm lg:text-base font-medium py-2 px-3 lg:px-4 whitespace-nowrap transition-all duration-300 ease-in-out rounded-xl group bg-gradient-to-br from-green-50 to-white hover:from-green-100 hover:to-white border border-green-100 hover:border-green-300 shadow-sm"
           onClick={navigateToHome}
         >
           <div className="relative inline-flex items-center">
-            <Home className="h-4 w-4 text-blue-600 transition-all group-hover:scale-110 group-hover:text-blue-700" />
-            <span className="ml-2 hidden lg:inline-block font-medium text-gray-700 group-hover:text-blue-700">
+            <Home className="h-4 w-4 text-green-600 transition-all group-hover:scale-110 group-hover:text-green-700" />
+            <span className="ml-2 font-medium text-gray-800 group-hover:text-green-700">
               {Language === 'ar' ? 'الرئيسية' : 'Home'}
             </span>
           </div>
-          <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-4/5"></span>
+          <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-1 bg-green-600 transition-all duration-300 group-hover:w-4/5 rounded-full"></span>
         </Button>
       </div>
       
@@ -151,11 +167,11 @@ export default function NavBanner() {
         >
           <Button
             variant="ghost"
-            className={`text-sm lg:text-base font-medium py-1 px-1 lg:px-2 whitespace-nowrap transition-all duration-300 ease-in-out relative rounded-lg border border-transparent hover:border-gray-200 shadow-sm
+            className={`text-sm lg:text-base font-medium py-2 px-3 lg:px-4 whitespace-nowrap transition-all duration-300 ease-in-out relative rounded-xl border shadow-sm
               ${
                 activeCategory?.id === category.id
-                  ? "text-blue-700 bg-blue-50 border-blue-200"
-                  : "text-gray-700 hover:text-blue-600 bg-gradient-to-b from-white to-gray-50 hover:from-gray-50 hover:to-gray-100"
+                  ? "text-white bg-gradient-to-br from-red-600 to-red-700 border-red-700 hover:from-red-700 hover:to-red-800"
+                  : "text-gray-800 hover:text-white bg-gradient-to-br from-gray-50 to-white hover:from-gray-800 hover:to-black border-gray-200 hover:border-gray-800"
               }`}
             onClick={() => handleCategoryClick(category)}
           >
@@ -164,7 +180,7 @@ export default function NavBanner() {
                 <img 
                   src={category.icon_url} 
                   alt={category.name[Language]} 
-                  className="w-3 h-3 mr-2 object-contain"
+                  className="w-4 h-4 mr-2 object-contain"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.onerror = null;
@@ -172,24 +188,28 @@ export default function NavBanner() {
                   }}
                 />
               ) : (
-                <span className="w-4 h-5 mr-4 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-xs font-bold">
-                  {category.name[Language].charAt(0)}
+                <span className={`w-5 h-5 mr-2 flex items-center justify-center rounded-full text-xs font-bold ${
+                  activeCategory?.id === category.id 
+                    ? "bg-white text-red-600" 
+                    : "bg-green-100 text-green-700"
+                }`}>
+                  {getCategoryIcon(category.slug)}
                 </span>
               )}
               {category.name[Language]}
               {category.sub_categories?.length > 0 && (
                 <ChevronDown
-                  className={`ml-1 h-3 w-3 transition-transform duration-300 ${
+                  className={`ml-1 h-4 w-4 transition-transform duration-300 ${
                     activeCategory?.id === category.id 
-                      ? "transform rotate-180 text-blue-700" 
-                      : "text-gray-500 group-hover:text-blue-600"
+                      ? "transform rotate-180 text-white" 
+                      : "text-gray-500 group-hover:text-white"
                   }`}
                 />
               )}
             </div>
-            <span className={`absolute -bottom-1 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 transition-all duration-300 ${
-              activeCategory?.id === category.id ? "w-3/5" : "w-0 group-hover:w-4/5"
-            }`}></span>
+            {activeCategory?.id !== category.id && (
+              <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-1 bg-green-600 transition-all duration-300 group-hover:w-4/5 rounded-full"></span>
+            )}
           </Button>
         </div>
       ))}
@@ -198,52 +218,47 @@ export default function NavBanner() {
 
   const renderMobileCategories = () => (
     <div className="md:hidden">
-      <div className="flex items-center justify-between py-3 px-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-        <span className="text-lg font-semibold text-gray-800">
-          {Language === 'ar' ? 'تصفح الفئات' : 'Browse Categories'}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleMobileMenu}
-          className="p-2 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-colors border border-gray-200 shadow-sm"
-        >
-          {isMobileMenuOpen ? (
-            <X className="h-5 w-5 text-blue-700" />
-          ) : (
-            <Menu className="h-5 w-5 text-gray-700" />
-          )}
-        </Button>
+      <div className="flex items-center justify-between py-3 px-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
+        <div className="flex items-center">
+          <span className="text-lg font-bold text-gray-800 bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
+            4YOU<span className="text-red-600">AD</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={navigateToHome}
+            className="p-2 rounded-lg hover:bg-green-100 hover:text-green-700 transition-colors"
+          >
+            <Home className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleMobileMenu}
+            className="p-2 rounded-lg hover:bg-red-100 hover:text-red-700 transition-colors"
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
       </div>
 
       {isMobileMenuOpen && (
         <div className="bg-white shadow-xl border-t border-gray-200">
           <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
-            {/* Enhanced Mobile Home Button */}
-            <div className="border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
-              <Button
-                variant="ghost"
-                className="w-full text-right justify-between py-4 px-6 text-base font-medium transition-colors hover:bg-blue-100 hover:text-blue-700"
-                onClick={navigateToHome}
-              >
-                <div className="flex items-center">
-                  <Home className="h-5 w-5 text-blue-700 mr-2" />
-                  <span className="font-medium text-gray-800">{Language === 'ar' ? 'الرئيسية' : 'Home'}</span>
-                </div>
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                  {Language === 'ar' ? 'الصفحة الرئيسية' : 'Main page'}
-                </span>
-              </Button>
-            </div>
-            
             {categories.map((category) => (
               <div key={category.id} className="border-b border-gray-200 last:border-b-0">
                 <Button
                   variant="ghost"
                   className={`w-full text-right justify-between py-4 px-6 text-base transition-colors rounded-none ${
                     activeCategory?.id === category.id
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "hover:bg-gray-50 text-gray-800 font-normal"
+                      ? "bg-red-50 text-red-700 font-medium"
+                      : "hover:bg-green-50 text-gray-800 font-normal"
                   }`}
                   onClick={() => handleCategoryClick(category)}
                 >
@@ -260,8 +275,12 @@ export default function NavBanner() {
                         }}
                       />
                     ) : (
-                      <span className="w-5 h-5 mr-3 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-xs font-bold">
-                        {category.name[Language].charAt(0)}
+                      <span className={`w-5 h-5 mr-3 flex items-center justify-center rounded-full text-xs font-bold ${
+                        activeCategory?.id === category.id 
+                          ? "bg-red-100 text-red-700" 
+                          : "bg-green-100 text-green-700"
+                      }`}>
+                        {getCategoryIcon(category.slug)}
                       </span>
                     )}
                     <span className={activeCategory?.id === category.id ? "font-medium" : ""}>
@@ -272,7 +291,7 @@ export default function NavBanner() {
                     <ChevronDown
                       className={`h-4 w-4 transition-transform duration-300 ${
                         activeCategory?.id === category.id 
-                          ? "transform rotate-180 text-blue-700" 
+                          ? "transform rotate-180 text-red-700" 
                           : "text-gray-500"
                       }`}
                     />
@@ -280,13 +299,13 @@ export default function NavBanner() {
                 </Button>
                 
                 {activeCategory?.id === category.id && category.sub_categories && (
-                  <div className="bg-gray-50 px-6 py-3 border-l-4 border-blue-600">
+                  <div className="bg-gradient-to-r from-green-50 to-white px-6 py-3 border-l-4 border-red-600">
                     <div className="grid grid-cols-1 gap-2">
                       {category.sub_categories.map((subcategory) => (
                         <button
                           key={subcategory.id}
                           onClick={() => handleSubcategoryClick(subcategory)}
-                          className="text-sm text-gray-700 hover:text-blue-700 transition duration-150 ease-in-out p-3 rounded-lg hover:bg-blue-50 text-start flex items-center border border-gray-200 bg-white hover:border-blue-300 shadow-xs"
+                          className="text-sm text-gray-700 hover:text-green-700 transition duration-150 ease-in-out p-3 rounded-lg hover:bg-green-50 text-start flex items-center border border-gray-200 bg-white hover:border-green-300 shadow-xs"
                         >
                           {subcategory.icon_url ? (
                             <img 
@@ -300,8 +319,8 @@ export default function NavBanner() {
                               }}
                             />
                           ) : (
-                            <span className="w-5 h-5 mr-3 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-xs font-bold">
-                              {subcategory.name[Language].charAt(0)}
+                            <span className="w-5 h-5 mr-3 flex items-center justify-center bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                              {getCategoryIcon(subcategory.slug)}
                             </span>
                           )}
                           <span className="font-medium">{subcategory.name[Language]}</span>
@@ -331,10 +350,13 @@ export default function NavBanner() {
         >
           <div className="container mx-auto px-6 py-5">
             <div className="flex items-center mb-4 px-2">
-              <h3 className="text-lg font-bold text-gray-900">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                <span className="w-8 h-8 bg-gradient-to-br from-red-600 to-red-700 rounded-full flex items-center justify-center text-white mr-3">
+                  {getCategoryIcon(activeCategory.slug)}
+                </span>
                 {activeCategory.name[Language]}
               </h3>
-              <span className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-full ml-3">
+              <span className="text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-800 px-3 py-1 rounded-full ml-3">
                 {activeCategory.sub_categories.length} {Language === 'ar' ? 'أقسام' : 'categories'}
               </span>
             </div>
@@ -343,14 +365,14 @@ export default function NavBanner() {
                 <button
                   key={subcategory.id}
                   onClick={() => handleSubcategoryClick(subcategory)}
-                  className="group flex flex-col items-center text-sm font-medium text-gray-700 hover:text-blue-700 transition duration-200 ease-in-out p-3 rounded-xl bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-md"
+                  className="group flex flex-col items-center text-sm font-medium text-gray-700 hover:text-white transition duration-200 ease-in-out p-3 rounded-xl bg-gradient-to-b from-white to-gray-50 hover:from-gray-800 hover:to-black border border-gray-200 hover:border-gray-700 shadow-sm hover:shadow-md"
                 >
-                  <div className="w-16 h-16 mb-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
+                  <div className="w-16 h-16 mb-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-gray-700 group-hover:to-gray-800 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
                     {subcategory.icon_url ? (
                       <img 
                         src={subcategory.icon_url} 
                         alt={subcategory.name[Language]} 
-                        className="w-10 h-10 object-contain transition-transform group-hover:scale-110"
+                        className="w-10 h-10 object-contain transition-transform group-hover:scale-110 group-hover:brightness-0 group-hover:invert"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.onerror = null;
@@ -358,16 +380,17 @@ export default function NavBanner() {
                         }}
                       />
                     ) : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center text-white text-xl font-bold">
-                        {subcategory.name[Language].charAt(0).toUpperCase()}
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-green-800 rounded-lg flex items-center justify-center text-white text-xl font-bold group-hover:from-red-600 group-hover:to-red-800">
+                        {getCategoryIcon(subcategory.slug)}
                       </div>
                     )}
                   </div>
-                  <span className="text-center font-medium group-hover:font-semibold">
+                  <span className="text-center font-medium group-hover:font-semibold group-hover:text-white">
                     {subcategory.name[Language]}
                   </span>
-                  <span className="text-xs text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-1">
+                  <span className="text-xs text-green-600 group-hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-1 flex items-center">
                     {Language === 'ar' ? 'تصفح' : 'Browse'}
+                    <ChevronDown className={`h-3 w-3 ml-1 ${Language === 'ar' ? 'rotate-180' : ''}`} />
                   </span>
                 </button>
               ))}
@@ -384,7 +407,7 @@ export default function NavBanner() {
         <div className="container mx-auto max-w-7xl py-3 px-4">
           <div className="animate-pulse flex space-x-4">
             <div className="flex-1 space-y-4 py-1">
-              <div className="h-10 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 rounded-lg w-full"></div>
+              <div className="h-12 bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 rounded-xl w-full"></div>
             </div>
           </div>
         </div>
