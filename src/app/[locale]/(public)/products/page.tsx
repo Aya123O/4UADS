@@ -15,7 +15,6 @@ interface Product {
   final_price: number;
   quantity: number;
   picture_url: string;
-  rating?: number;
 }
 
 interface Category {
@@ -63,14 +62,13 @@ interface HomeProductsResponse {
   message: string;
 }
 
-type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "rating-desc" | "none";
+type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "none";
 
 interface FilterOptions {
   minPrice: number | null;
   maxPrice: number | null;
   inStockOnly: boolean;
   discountedOnly: boolean;
-  rating: number | null;
 }
 
 export default function ProductsPage({
@@ -91,7 +89,7 @@ export default function ProductsPage({
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    perPage: 10
+    perPage: 12
   });
 
   // Filter and sort state
@@ -101,7 +99,6 @@ export default function ProductsPage({
     maxPrice: null,
     inStockOnly: false,
     discountedOnly: false,
-    rating: null,
   });
   const [showFilters, setShowFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -114,7 +111,7 @@ export default function ProductsPage({
       
       if (categorySlug) {
         const response = await fetch(
-          `https://new.4youad.com/api/products?category_slug=${categorySlug}&page=${pagination.currentPage}`
+          `https://new.4youad.com/api/products?category_slug=${categorySlug}&page=${pagination.currentPage}&per_page=${pagination.perPage}`
         );
         if (!response.ok) {
           const errorData = await response.json();
@@ -181,10 +178,6 @@ export default function ProductsPage({
     if (filterOptions.discountedOnly) {
       filtered = filtered.filter(p => p.discount > 0);
     }
-    
-    if (filterOptions.rating !== null) {
-      filtered = filtered.filter(p => (p.rating || 0) >= filterOptions.rating!);
-    }
 
     // Apply sorting
     if (sortOption !== "none") {
@@ -198,8 +191,6 @@ export default function ProductsPage({
             return a.final_price - b.final_price;
           case "price-desc":
             return b.final_price - a.final_price;
-          case "rating-desc":
-            return (b.rating || 0) - (a.rating || 0);
           default:
             return 0;
         }
@@ -215,7 +206,6 @@ export default function ProductsPage({
       maxPrice: null,
       inStockOnly: false,
       discountedOnly: false,
-      rating: null,
     });
     setSortOption("none");
   };
@@ -382,8 +372,8 @@ Can you help me with the purchase?`;
                 <div className="h-8 w-48 rounded-full bg-gray-100 animate-pulse"></div>
                 <div className="h-6 w-24 rounded-full bg-gray-100 animate-pulse"></div>
               </div>
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[1, 2, 3, 4].map((product) => (
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {[1, 2, 3, 4, 5].map((product) => (
                   <div key={product} className="group">
                     <div className="aspect-square w-full rounded-xl bg-gray-100 animate-pulse overflow-hidden"></div>
                     <div className="mt-4 space-y-2">
@@ -445,6 +435,41 @@ Can you help me with the purchase?`;
         
         .transform-hover:hover {
           transform: translateY(-3px);
+        }
+
+        .quantity-btn {
+          transition: all 0.2s ease;
+          user-select: none;
+        }
+        
+        .quantity-btn:active {
+          transform: scale(0.95);
+        }
+
+        /* Stock Quantity Styles */
+        .stock-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          background-color: #f0fdf4;
+          color: #166534;
+          border: 1px solid #bbf7d0;
+        }
+
+        .stock-badge .dot {
+          width: 0.5rem;
+          height: 0.5rem;
+          border-radius: 50%;
+          background-color: #22c55e;
+          margin-right: 0.375rem;
+        }
+
+        .rtl .stock-badge .dot {
+          margin-right: 0;
+          margin-left: 0.375rem;
         }
       `}</style>
 
@@ -541,7 +566,6 @@ Can you help me with the purchase?`;
                       { value: "name-desc", label: Language === 'ar' ? 'الاسم (ي-أ)' : 'Name (Z-A)' },
                       { value: "price-asc", label: Language === 'ar' ? 'السعر (منخفض إلى مرتفع)' : 'Price (Low to High)' },
                       { value: "price-desc", label: Language === 'ar' ? 'السعر (مرتفع إلى منخفض)' : 'Price (High to Low)' },
-                      { value: "rating-desc", label: Language === 'ar' ? 'أعلى التقييمات' : 'Top Rated' }
                     ].map((option) => (
                       <div key={option.value} className={`flex items-center ${Language === 'ar' ? 'flex-row-reverse' : ''}`}>
                         <input
@@ -646,43 +670,6 @@ Can you help me with the purchase?`;
                         {Language === 'ar' ? 'المنتجات المخفضة فقط' : 'Discounted Only'}
                       </label>
                     </div>
-                  </div>
-                </div>
-
-                {/* Rating */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    {Language === 'ar' ? 'التقييم' : 'Rating'}
-                  </label>
-                  <div className="space-y-3">
-                    {[5, 4, 3, 2, 1].map((rating) => (
-                      <div key={rating} className={`flex items-center ${Language === 'ar' ? 'flex-row-reverse' : ''}`}>
-                        <input
-                          id={`rating-${rating}`}
-                          name="rating"
-                          type="radio"
-                          checked={filterOptions.rating === rating}
-                          onChange={() => setFilterOptions({
-                            ...filterOptions,
-                            rating: filterOptions.rating === rating ? null : rating
-                          })}
-                          className="h-4 w-4 border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                        />
-                        <label htmlFor={`rating-${rating}`} className={`text-sm text-gray-700 cursor-pointer flex items-center ${
-                          Language === 'ar' ? 'mr-3' : 'ml-3'
-                        }`}>
-                          {[...Array(5)].map((_, i) => (
-                            <FiStar
-                              key={i}
-                              className={`${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} w-4 h-4 ${
-                                Language === 'ar' ? 'ml-1' : 'mr-1'
-                              }`}
-                            />
-                          ))}
-                          {rating === 5 && <span className="text-xs text-gray-500 ml-1">+</span>}
-                        </label>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -830,34 +817,29 @@ Can you help me with the purchase?`;
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-gray-100 rounded-lg overflow-hidden">
+                <div className="bg-gray-100 rounded-lg overflow-hidden h-full max-h-[500px] flex items-center">
                   <img
                     src={selectedProduct.picture_url}
                     alt={selectedProduct.name[lang]}
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto object-contain max-h-[500px]"
                   />
                 </div>
                 
                 <div>
                   <div className="mb-6">
                     <div className="flex items-center mb-4">
-                      {selectedProduct.rating && (
-                        <div className="flex items-center mr-4">
-                          {[...Array(5)].map((_, i) => (
-                            <FiStar
-                              key={i}
-                              className={`${i < Math.floor(selectedProduct.rating!) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} w-5 h-5 ${Language === 'ar' ? 'ml-1' : 'mr-1'}`}
-                            />
-                          ))}
-                          <span className="text-sm text-gray-500 ml-1">
-                            ({selectedProduct.rating.toFixed(1)})
-                          </span>
-                        </div>
-                      )}
                       <span className={`text-sm font-medium ${selectedProduct.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {selectedProduct.quantity > 0 
                           ? (Language === 'ar' ? 'متوفر في المخزن' : 'In Stock')
                           : (Language === 'ar' ? 'غير متوفر' : 'Out of Stock')}
+                      </span>
+                    </div>
+                    
+                    {/* Stock Quantity Badge */}
+                    <div className="mb-4">
+                      <span className="stock-badge">
+                        <span className="dot"></span>
+                        {selectedProduct.quantity} {Language === 'ar' ? 'متوفر في المخزن' : 'In Stock'}
                       </span>
                     </div>
                     
@@ -887,15 +869,15 @@ Can you help me with the purchase?`;
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden w-fit">
                       <button 
-                        className="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="quantity-btn px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         onClick={decreaseQuantity}
                         disabled={quantity <= 1}
                       >
                         -
                       </button>
-                      <span className="px-4 py-2 text-center w-12">{quantity}</span>
+                      <span className="px-4 py-2 text-center w-16 font-medium">{quantity}</span>
                       <button 
-                        className="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="quantity-btn px-4 py-2 bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         onClick={increaseQuantity}
                         disabled={selectedProduct.quantity <= quantity}
                       >
@@ -933,7 +915,7 @@ interface ProductCardProps {
 
 function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick }: ProductCardProps) {
   return (
-    <div className="group relative h-full flex flex-col transition-slow transform-hover ">
+    <div className="group relative h-full flex flex-col transition-slow transform-hover">
       <div className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100 hover:shadow-hover transition-slow h-full flex flex-col">
         {/* Product Image */}
         <div className="relative overflow-hidden pt-[100%] bg-gray-50">
@@ -989,23 +971,6 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick }:
             {product.name[language]}
           </h3>
           
-          {/* Rating */}
-          {product.rating && (
-            <div className="flex items-center mb-3">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <FiStar
-                    key={i}
-                    className={`${i < Math.floor(product.rating!) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-gray-500 ml-1">
-                ({product.rating.toFixed(1)})
-              </span>
-            </div>
-          )}
-          
           {/* Price */}
           <div className="mt-auto">
             <div className="flex items-baseline gap-2">
@@ -1019,13 +984,19 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick }:
               )}
             </div>
             
-            {/* Stock Status */}
-            <div className="mt-2">
-              <span className={`text-xs ${product.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {/* Stock Status and Quantity */}
+            <div className="mt-2 flex items-center gap-2">
+              {/* <span className={`text-xs ${product.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {product.quantity > 0 
                   ? `${product.quantity} ${language === 'ar' ? 'متوفر في المخزن' : 'In Stock'}`
                   : language === 'ar' ? 'نفذ من المخزن' : 'Out of Stock'}
-              </span>
+              </span> */}
+              {product.quantity > 0 && (
+                <span className="stock-badge">
+                  <span className="dot"></span>
+                  {product.quantity} {language === 'ar' ? 'متوفر' : 'Available'}
+                </span>
+              )}
             </div>
             
             {/* WhatsApp Button */}
@@ -1035,16 +1006,16 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick }:
                 e.stopPropagation();
                 onWhatsAppClick?.();
               }}
-              className={`mt-4 w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-slow ${
+              className={`mt-4 w-full py-3.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-slow ${
                 product.quantity > 0 
                   ? 'bg-green-600 hover:bg-green-700 text-white shadow-md transform-hover'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed'
               }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
-              {language === 'ar' ? 'تواصل عبر واتساب' : 'Contact via WhatsApp'}
+              {language === 'ar' ? 'أطلب عبر واتساب' : 'Order via WhatsApp'}
             </button>
           </div>
         </div>
