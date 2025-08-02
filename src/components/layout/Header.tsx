@@ -129,7 +129,7 @@ export default function Header() {
   // Color scheme
   const colors = {
     primary: '#E53E3E', // Red
-    secondary: '#38A169', // Green
+    secondary: '#38A169', // red
     dark: '#1A202C', // Dark gray/black
     light: '#F7FAFC', // Light gray
     accent: '#F6AD55', // Orange for accents
@@ -532,7 +532,7 @@ export default function Header() {
     </div>
   ) : businessInfo?.business_logo_url ? (
     <div className="flex items-center gap-3">
-      <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-green-500 transition-all duration-300 hover:scale-105">
+      <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-red-500 transition-all duration-300 hover:scale-105">
         <Image
           src={businessInfo.business_logo_url}
           alt={businessInfo.business_name?.[Language] || "4YOUAD"}
@@ -548,7 +548,7 @@ export default function Header() {
     </div>
   ) : (
     <div className="flex items-center gap-3">
-      <div className="h-12 w-12 rounded-full bg-green-600 text-white flex items-center justify-center text-xl font-bold">
+      <div className="h-12 w-12 rounded-full bg-red-600 text-white flex items-center justify-center text-xl font-bold">
         4Y
       </div>
       <span className="text-lg font-bold text-gray-800 hidden sm:block">
@@ -571,13 +571,13 @@ export default function Header() {
                     onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
                     onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
                     placeholder={currentContent.searchPlaceholder}
-                    className="w-full pl-9 pr-20 py-2 text-xs rounded-full border-gray-300 focus:ring-2 focus:ring-green-500 shadow-sm hover:border-gray-400 transition-colors"
+                    className="w-full pl-9 pr-20 py-2 text-xs rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm hover:border-gray-400 transition-colors"
                   />
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                   <Button 
                     type="submit"
                     variant="default" 
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-green-600 hover:bg-green-700 h-6 px-3 text-xs shadow-sm rounded-full"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-red-600 hover:bg-red-700 h-6 px-3 text-xs shadow-sm rounded-full"
                   >
                     {Language === 'ar' ? 'بحث' : 'Search'}
                   </Button>
@@ -599,7 +599,7 @@ export default function Header() {
                               <Link
                                 key={`cat-${result.id}`}
                                 href={`/products/${result.slug}`}
-                                className="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-green-50 transition-colors"
+                                className="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-red-50 transition-colors"
                               >
                                 {result.image_url ? (
                                   <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
@@ -633,7 +633,7 @@ export default function Header() {
                               <Link
                                 key={`prod-${result.id}`}
                                 href={`/product/${result.slug}`}
-                                className="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-green-50 transition-colors"
+                                className="flex items-center px-3 py-2 text-xs text-gray-700 hover:bg-red-50 transition-colors"
                               >
                                 {result.image_url ? (
                                   <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
@@ -662,7 +662,7 @@ export default function Header() {
             <div className="flex lg:hidden items-center">
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1 rounded-md text-gray-600 hover:text-green-600 hover:bg-gray-100 focus:outline-none transition-colors"
+                className="p-1 rounded-md text-gray-600 hover:text-red-600 hover:bg-gray-100 focus:outline-none transition-colors"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (

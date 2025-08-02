@@ -156,7 +156,7 @@ export default function Footer() {
                 <li key={item.href}>
                   <Link 
                     href={item.href} 
-                    className="text-gray-300 hover:text-green-500 transition-colors duration-300 flex items-center group"
+                    className="text-gray-300 hover:text-red-500 transition-colors duration-300 flex items-center group"
                   >
                     <ArrowRight 
                       className={`h-4 w-4 text-red-600 mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 ${Language === "ar" ? "rotate-180" : ""}`} 
@@ -184,7 +184,7 @@ export default function Footer() {
                 <li key={item.href}>
                   <Link 
                     href={item.href} 
-                    className="text-gray-300 hover:text-green-500 transition-colors duration-300 flex items-center group"
+                    className="text-gray-300 hover:text-red-500 transition-colors duration-300 flex items-center group"
                   >
                     <ArrowRight 
                       className={`h-4 w-4 text-red-600 mr-2 opacity-0 group-hover:opacity-100 transition-all duration-300 ${Language === "ar" ? "rotate-180" : ""}`} 
@@ -207,27 +207,27 @@ export default function Footer() {
               {!loading && businessInfo && (
                 <ul className="space-y-4">
                   <li className="flex items-start space-x-3 rtl:space-x-reverse">
-                    <Phone className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <Phone className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                     <a 
                       href={`tel:${businessInfo.business_phone}`} 
-                      className="text-gray-300 hover:text-green-500 transition-colors duration-300 hover:underline"
+                      className="text-gray-300 hover:text-red-500 transition-colors duration-300 hover:underline"
                     >
                       {businessInfo.business_phone}
                     </a>
                   </li>
                   <li className="flex items-start space-x-3 rtl:space-x-reverse">
-                    <Mail className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <Mail className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                     <a 
                       href={`mailto:${businessInfo.business_email}`} 
-                      className="text-gray-300 hover:text-green-500 transition-colors duration-300 hover:underline"
+                      className="text-gray-300 hover:text-red-500 transition-colors duration-300 hover:underline"
                     >
                       {businessInfo.business_email}
                     </a>
                   </li>
                   {businessInfo.address && (
                     <li className="flex items-start space-x-3 rtl:space-x-reverse">
-                      <MapPin className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300 hover:text-green-500 transition-colors duration-300">
+                      <MapPin className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-300 hover:text-red-500 transition-colors duration-300">
                         {businessInfo.address}
                       </span>
                     </li>
@@ -247,12 +247,12 @@ export default function Footer() {
                 <input
                   type="email"
                   placeholder={currentContent.newsletter.placeholder}
-                  className="px-4 py-2 text-sm rounded-md w-full focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 flex-grow border border-gray-300 transition-all duration-300 hover:border-green-400"
+                  className="px-4 py-2 text-sm rounded-md w-full focus:outline-none focus:ring-2 focus:ring-red-500 text-gray-900 flex-grow border border-gray-300 transition-all duration-300 hover:border-red-400"
                   required
                 />
                 <button 
                   type="submit"
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm rounded-md transition-all duration-300 whitespace-nowrap hover:shadow-lg transform hover:-translate-y-0.5"
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-sm rounded-md transition-all duration-300 whitespace-nowrap hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                   {currentContent.newsletter.subscribe}
                 </button>

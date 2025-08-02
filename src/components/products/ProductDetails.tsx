@@ -370,13 +370,13 @@ Can you confirm the order?`;
   if (!product) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-blue-600 px-8 py-6 rounded-2xl inline-block max-w-md shadow-sm">
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-red-600 px-8 py-6 rounded-2xl inline-block max-w-md shadow-sm">
           <p className="font-medium text-lg">
             {Language === "ar" ? "المنتج غير موجود" : "Product not found"}
           </p>
           <Button 
             variant="ghost" 
-            className="mt-4 text-blue-600 hover:bg-blue-100"
+            className="mt-4 text-red-600 hover:bg-blue-100"
             onClick={() => router.push("/ads")}
           >
             {Language === "ar" ? "تصفح المنتجات الأخرى" : "Browse other products"}
@@ -418,7 +418,7 @@ Can you confirm the order?`;
               <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
               <a 
                 href={`/products?sub_category_id=${product.sub_category.slug}`} 
-                className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
+                className="text-sm font-medium text-gray-500 hover:text-red transition-colors"
               >
                 {product.sub_category.name[Language]}
               </a>
@@ -427,7 +427,7 @@ Can you confirm the order?`;
           <li aria-current="page">
             <div className="flex items-center">
               <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
-              <span className="text-sm font-medium text-primary">
+              <span className="text-sm font-medium text-black">
                 {product.name[Language]}
               </span>
             </div>
@@ -516,9 +516,7 @@ Can you confirm the order?`;
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-1">
                   {renderStars()}
-                  <span className="text-sm text-gray-500 ml-1">
-                    (5 {Language === "ar" ? "تقييمات" : "reviews"})
-                  </span>
+                 
                 </div>
                 
                 <span className="text-sm text-gray-500 flex items-center">
@@ -582,10 +580,23 @@ Can you confirm the order?`;
                             id={`${spec.id}-${detail.id}`}
                             className="peer hidden"
                           />
-                          <Label 
-                            htmlFor={`${spec.id}-${detail.id}`}
-                            className="flex flex-1 items-center justify-center rounded-lg border-2 border-gray-200 bg-white p-3 text-sm font-medium hover:border-primary peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 cursor-pointer transition-all"
-                          >
+                            <Label
+  htmlFor={`${spec.id}-${detail.id}`}
+  className={`
+    flex flex-1 items-center justify-center 
+    rounded-lg border-2 p-3 text-sm font-medium 
+    cursor-pointer transition-all duration-200
+    border-gray-200 hover:border-red-400
+    bg-white hover:bg-red-50
+    text-gray-700 hover:text-red-700
+    peer-data-[state=checked]:border-red-500
+    peer-data-[state=checked]:bg-red-50
+    peer-data-[state=checked]:text-red-700
+    peer-data-[state=checked]:shadow-sm
+    peer-data-[state=checked]:shadow-red-100
+    active:scale-[0.98]
+  `}
+>
                             {detail.name[Language]}
                           </Label>
                         </div>
@@ -646,9 +657,9 @@ Can you confirm the order?`;
 
           {/* Location with map link */}
           {product.address && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-100">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-black-100">
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-5 h-5 text-black-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm text-gray-500 mb-1">
                     {Language === "ar" ? "الموقع" : "Location"}
@@ -662,7 +673,7 @@ Can you confirm the order?`;
                       href={`https://maps.google.com/?q=${product.latitude},${product.longitude}`} 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block mt-2 text-sm text-green-600 hover:underline"
+                      className="inline-block mt-2 text-sm text-black-600 hover:underline"
                     >
                       {Language === "ar" ? "عرض على الخريطة" : "View on map"}
                     </a>
@@ -789,39 +800,16 @@ Can you confirm the order?`;
       <div className="mt-16">
         <Tabs defaultValue="description" className="w-full">
           <TabsList className="w-full justify-start bg-transparent p-0 border-b border-gray-200 rounded-none">
-            <TabsTrigger 
-              value="description" 
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
-            >
-              {Language === "ar" ? "وصف المنتج" : "Product Description"}
-            </TabsTrigger>
+          
             <TabsTrigger 
               value="details" 
               className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
             >
               {Language === "ar" ? "تفاصيل المنتج" : "Product Details"}
             </TabsTrigger>
-            <TabsTrigger 
-              value="reviews" 
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
-            >
-              {Language === "ar" ? "التقييمات" : "Reviews"}
-            </TabsTrigger>
+          
           </TabsList>
           
-          <TabsContent value="description" className="mt-6">
-            {(product.description.ar || product.description.en) ? (
-              <div className="prose max-w-none">
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {product.description[Language] || product.description.en || product.description.ar}
-                </p>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">
-                {Language === "ar" ? "لا يوجد وصف متاح" : "No description available"}
-              </p>
-            )}
-          </TabsContent>
           
           <TabsContent value="details" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -875,30 +863,14 @@ Can you confirm the order?`;
             </div>
           </TabsContent>
           
-          <TabsContent value="reviews" className="mt-6">
-            <div className="bg-gray-50 rounded-2xl p-6 text-center">
-              <div className="inline-flex items-center justify-center bg-white p-4 rounded-full shadow-sm mb-4">
-                <div className="text-3xl font-bold mr-2">4.8</div>
-                <div>
-                  {renderStars(4.8)}
-                  <div className="text-sm text-gray-500 mt-1">
-                    {Language === "ar" ? "بناءً على 12 تقييم" : "Based on 12 reviews"}
-                  </div>
-                </div>
-              </div>
-              
-              <Button variant="outline" className="mt-4">
-                {Language === "ar" ? "كتابة تقييم" : "Write a review"}
-              </Button>
-            </div>
-          </TabsContent>
+       
         </Tabs>
       </div>
 
       {/* Seller Information with enhanced card */}
       <div className="mt-16">
         <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-          <span className="w-4 h-8 bg-gradient-to-r from-primary to-blue-500 rounded-full mr-3"></span>
+<span className="w-4 h-8 bg-gradient-to-r from-black  to-white rounded-full mr-3"></span>
           {Language === "ar" ? "معلومات البائع" : "Seller Information"}
         </h3>
         
@@ -949,35 +921,17 @@ Can you confirm the order?`;
                     </div>
                   </div>
                   
-                  <div>
-                    <h5 className="text-sm font-medium text-gray-500 mb-2">
-                      {Language === "ar" ? "الإحصائيات" : "Statistics"}
-                    </h5>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-50 p-3 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-primary">24</div>
-                        <div className="text-xs text-gray-500">
-                          {Language === "ar" ? "المنتجات" : "Products"}
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-primary">98%</div>
-                        <div className="text-xs text-gray-500">
-                          {Language === "ar" ? "معدل الاستجابة" : "Response rate"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                 
                 </div>
                 
                 <Separator className="my-6" />
                 
                 <div className="flex flex-wrap gap-3">
-                  <Button 
-                    variant="default" 
-                    className="flex items-center gap-2 bg-gradient-to-r from-primary to-blue-500 text-white"
-                    onClick={handleShowPhoneNumber}
-                  >
+               <Button 
+                  variant="default" 
+                  className="flex items-center gap-2 bg-gradient-to-r from-black via-red-500 to-white text-white hover:opacity-90 transition duration-300"
+                  onClick={handleShowPhoneNumber}
+                >
                     <Phone className="w-4 h-4" />
                     {Language === "ar" ? "اتصال" : "Call"}
                   </Button>
@@ -990,13 +944,7 @@ Can you confirm the order?`;
                     <MessageCircle className="w-4 h-4" />
                     WhatsApp
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-2 border-gray-200 hover:bg-gray-50"
-                  >
-                    <Link className="w-4 h-4" />
-                    {Language === "ar" ? "زيارة المتجر" : "Visit Store"}
-                  </Button>
+               
                 </div>
               </div>
             </div>
@@ -1008,13 +956,13 @@ Can you confirm the order?`;
       <div className="mt-20">
         <div className="flex justify-between items-center mb-8">
           <h3 className="text-2xl font-bold text-gray-900 flex items-center">
-            <span className="w-4 h-8 bg-gradient-to-r from-primary to-blue-500 rounded-full mr-3"></span>
+            <span className="w-4 h-8 bg-gradient-to-r from-red to-black-500 rounded-full mr-3"></span>
             {Language === "ar" ? "منتجات مشابهة" : "Similar Products"}
           </h3>
           {similarProducts.length > 0 && (
             <a 
               href={`/ads?main_category_id=${product.main_category.slug}&sub_category_id=${product.sub_category.slug}`} 
-              className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm font-medium"
+              className="text-red hover:text-primary/80 flex items-center gap-1 text-sm font-medium"
             >
               {Language === "ar" ? "عرض الكل" : "View all"}
               <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
