@@ -17,12 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface Product {
   id: number;
   slug: string;
   sku: string;
-  barcode: string;
+  barcode: string | null;
   name: {
     ar: string;
     en: string;
@@ -31,19 +33,34 @@ interface Product {
   discount: number;
   final_price: number;
   quantity: number;
-  address: string;
-  latitude: string;
-  longitude: string;
+  phone_number: string;
+  whatsapp_number: string;
+  address: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  specifications: string;
+  complementaries: string;
+  attributes: string;
   description: {
     ar: string | null;
     en: string | null;
   };
-  category_id: number;
+  main_category_id: number;
+  sub_category_id: number;
   customer_id: number;
   country_id: number;
   city_id: number;
   picture_url: string;
-  category: {
+  main_category: {
+    id: number;
+    slug: string;
+    name: {
+      ar: string;
+      en: string;
+    };
+    icon_url: string | null;
+  };
+  sub_category: {
     id: number;
     slug: string;
     name: {
@@ -75,25 +92,29 @@ interface Product {
       en: string;
     };
   };
-  complementaries: {
+  product_specifications: {
+    id: number;
+    name: {
+      ar: string;
+      en: string;
+    };
+    product_id: number;
+    details: {
+      id: number;
+      name: {
+        ar: string;
+        en: string;
+      };
+      specification_id: number;
+    }[];
+  }[];
+  created_at?: string;
+  views?: number;
+  options?: {
     id: number;
     name: string;
     product_id: number;
   }[];
-  attributes: {
-    id: number;
-    key: string;
-    value: string;
-    product_id: number;
-  }[];
-  specifications: {
-    id: number;
-    key: string;
-    value: string;
-    product_id: number;
-  }[];
-  created_at?: string;
-  views?: number;
 }
 
 interface SimilarProduct {
@@ -109,6 +130,10 @@ interface SimilarProduct {
   quantity: number;
 }
 
+interface SelectedSpecs {
+  [key: string]: string;
+}
+
 export default function ProductDetails() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,6 +144,7 @@ export default function ProductDetails() {
   const [similarProducts, setSimilarProducts] = useState<SimilarProduct[]>([]);
   const [similarLoading, setSimilarLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [selectedSpecs, setSelectedSpecs] = useState<SelectedSpecs>({});
   const { Language } = useLanguage();
   const { slug } = useParams();
   const router = useRouter();
@@ -134,7 +160,15 @@ export default function ProductDetails() {
           const result = await response.json();
           if (result.data) {
             setProduct(result.data);
-            fetchSimilarProducts(result.data.category_id);
+            // Initialize selected specs with first option for each specification
+            const initialSpecs: SelectedSpecs = {};
+            result.data.product_specifications.forEach((spec: any) => {
+              if (spec.details.length > 0) {
+                initialSpecs[spec.name[Language]] = spec.details[0].name[Language];
+              }
+            });
+            setSelectedSpecs(initialSpecs);
+            fetchSimilarProducts(result.data.main_category_id, result.data.sub_category_id);
           } else {
             setError("Product not found");
           }
@@ -148,13 +182,13 @@ export default function ProductDetails() {
 
       fetchProduct();
     }
-  }, [slug]);
+  }, [slug, Language]);
 
-  const fetchSimilarProducts = async (categoryId: number) => {
+  const fetchSimilarProducts = async (mainCategoryId: number, subCategoryId: number) => {
     try {
       setSimilarLoading(true);
       const response = await fetch(
-        `https://new.4youad.com/api/products?category_id=${categoryId}&limit=4`
+        `https://new.4youad.com/api/products?main_category_id=${mainCategoryId}&sub_category_id=${subCategoryId}&limit=4`
       );
       const result = await response.json();
       if (result.data) {
@@ -172,6 +206,13 @@ export default function ProductDetails() {
     setShowPhoneNumber(true);
   };
 
+  const handleSpecChange = (specName: string, value: string) => {
+    setSelectedSpecs(prev => ({
+      ...prev,
+      [specName]: value
+    }));
+  };
+
   const handleWhatsAppClick = () => {
     if (typeof window === "undefined" || !product) return;
 
@@ -180,11 +221,18 @@ export default function ProductDetails() {
     const totalPrice = (quantity * product.final_price).toLocaleString();
     const unitPrice = product.final_price.toLocaleString();
     
+    // Format selected specifications for the message
+    const specsText = Object.entries(selectedSpecs)
+      .map(([key, value]) => `- ${key}: ${value}`)
+      .join('\n');
+    
     const message =
       Language === "ar"
         ? `مرحبًا، أنا مهتم بشراء المنتج التالي:
         
 *${propertyName}*
+
+${specsText}
 
 - الكمية: ${quantity}
 - السعر للوحدة: ${unitPrice} ج.م
@@ -196,6 +244,8 @@ export default function ProductDetails() {
 
 *${propertyName}*
 
+${specsText}
+
 - Quantity: ${quantity}
 - Unit Price: ${unitPrice} EGP
 - Total Price: ${totalPrice} EGP
@@ -203,7 +253,7 @@ export default function ProductDetails() {
 
 Can you confirm the order?`;
 
-    let phoneNumber = product.customer.phone;
+    let phoneNumber = product.whatsapp_number || product.phone_number;
     if (!phoneNumber.startsWith("+")) {
       phoneNumber = `+20${phoneNumber}`;
     }
@@ -248,6 +298,11 @@ Can you confirm the order?`;
       setQuantity(quantity - 1);
     }
   };
+
+  // Parse JSON strings from API
+  const parsedSpecifications = product ? JSON.parse(product.specifications || '[]') : [];
+  const parsedComplementaries = product ? JSON.parse(product.complementaries || '[]') : [];
+  const parsedAttributes = product ? JSON.parse(product.attributes || '[]') : [];
 
   if (loading) {
     return (
@@ -351,10 +406,21 @@ Can you confirm the order?`;
             <div className="flex items-center">
               <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
               <a 
-                href={`/products?category_id=${product.category.slug}`} 
+                href={`/products?main_category_id=${product.main_category.slug}`} 
                 className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
               >
-                {product.category.name[Language]}
+                {product.main_category.name[Language]}
+              </a>
+            </div>
+          </li>
+          <li>
+            <div className="flex items-center">
+              <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
+              <a 
+                href={`/products?sub_category_id=${product.sub_category.slug}`} 
+                className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
+              >
+                {product.sub_category.name[Language]}
               </a>
             </div>
           </li>
@@ -492,6 +558,45 @@ Can you confirm the order?`;
             </div>
           </div>
 
+          {/* Product Specifications with Radio Buttons */}
+          {product.product_specifications.length > 0 && (
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3">
+                {Language === "ar" ? "مواصفات المنتج" : "Product Specifications"}
+              </h4>
+              <div className="space-y-6">
+                {product.product_specifications.map((spec) => (
+                  <div key={spec.id} className="space-y-3">
+                    <h5 className="text-sm font-medium text-gray-700">
+                      {spec.name[Language]}
+                    </h5>
+                    <RadioGroup 
+                      value={selectedSpecs[spec.name[Language]] || ''}
+                      onValueChange={(value) => handleSpecChange(spec.name[Language], value)}
+                      className="grid grid-cols-3 gap-3"
+                    >
+                      {spec.details.map((detail) => (
+                        <div key={detail.id} className="flex items-center space-x-2">
+                          <RadioGroupItem 
+                            value={detail.name[Language]} 
+                            id={`${spec.id}-${detail.id}`}
+                            className="peer hidden"
+                          />
+                          <Label 
+                            htmlFor={`${spec.id}-${detail.id}`}
+                            className="flex flex-1 items-center justify-center rounded-lg border-2 border-gray-200 bg-white p-3 text-sm font-medium hover:border-primary peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 cursor-pointer transition-all"
+                          >
+                            {detail.name[Language]}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quantity Selector */}
           <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
             <h4 className="font-medium text-gray-900 mb-3">
@@ -535,33 +640,37 @@ Can you confirm the order?`;
             </div>
             <div className="bg-gray-50 p-3 rounded-xl">
               <p className="text-sm text-gray-500">{Language === "ar" ? "الباركود" : "Barcode"}</p>
-              <p className="font-medium">{product.barcode}</p>
+              <p className="font-medium">{product.barcode || "N/A"}</p>
             </div>
           </div>
 
           {/* Location with map link */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-100">
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-gray-500 mb-1">
-                  {Language === "ar" ? "الموقع" : "Location"}
-                </p>
-                <p className="font-medium">{product.address}</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  {product.city.name[Language]}, {product.country.name[Language]}
-                </p>
-                <a 
-                  href={`https://maps.google.com/?q=${product.latitude},${product.longitude}`} 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-2 text-sm text-green-600 hover:underline"
-                >
-                  {Language === "ar" ? "عرض على الخريطة" : "View on map"}
-                </a>
+          {product.address && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-100">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">
+                    {Language === "ar" ? "الموقع" : "Location"}
+                  </p>
+                  <p className="font-medium">{product.address}</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {product.city.name[Language]}, {product.country.name[Language]}
+                  </p>
+                  {product.latitude && product.longitude && (
+                    <a 
+                      href={`https://maps.google.com/?q=${product.latitude},${product.longitude}`} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-2 text-sm text-green-600 hover:underline"
+                    >
+                      {Language === "ar" ? "عرض على الخريطة" : "View on map"}
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Tabs for specifications and attributes */}
           <Tabs defaultValue="specs" className="w-full">
@@ -575,10 +684,10 @@ Can you confirm the order?`;
             </TabsList>
             
             <TabsContent value="specs" className="mt-4">
-              {product.specifications.length > 0 ? (
+              {parsedSpecifications.length > 0 ? (
                 <div className="space-y-3">
-                  {product.specifications.map((spec) => (
-                    <div key={spec.id} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                  {parsedSpecifications.map((spec: any, index: number) => (
+                    <div key={index} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
                       <span className="text-gray-500">{spec.key}</span>
                       <span className="font-medium">{spec.value}</span>
                     </div>
@@ -592,10 +701,10 @@ Can you confirm the order?`;
             </TabsContent>
             
             <TabsContent value="attributes" className="mt-4">
-              {product.attributes.length > 0 ? (
+              {parsedAttributes.length > 0 ? (
                 <div className="space-y-3">
-                  {product.attributes.map((attr) => (
-                    <div key={attr.id} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+                  {parsedAttributes.map((attr: any, index: number) => (
+                    <div key={index} className="flex justify-between py-2 border-b border-gray-100 last:border-0">
                       <span className="text-gray-500">{attr.key}</span>
                       <span className="font-medium">{attr.value}</span>
                     </div>
@@ -610,19 +719,39 @@ Can you confirm the order?`;
           </Tabs>
 
           {/* Complementary Items with chips */}
-          {product.complementaries.length > 0 && (
+          {parsedComplementaries.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium text-gray-900">
                 {Language === "ar" ? "الاكسسوارات المكملة" : "Complementary Items"}
               </h4>
               <div className="flex flex-wrap gap-2">
-                {product.complementaries.map((item) => (
+                {parsedComplementaries.map((item: string, index: number) => (
                   <Badge 
-                    key={item.id} 
+                    key={index} 
                     variant="outline" 
                     className="px-3 py-1 text-sm bg-blue-50 border-blue-100 text-blue-600"
                   >
-                    {item.name}
+                    {item}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Options */}
+          {product.options && product.options.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-900">
+                {Language === "ar" ? "الخيارات" : "Options"}
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {product.options.map((option) => (
+                  <Badge 
+                    key={option.id} 
+                    variant="outline" 
+                    className="px-3 py-1 text-sm bg-purple-50 border-purple-100 text-purple-600"
+                  >
+                    {option.name}
                   </Badge>
                 ))}
               </div>
@@ -638,7 +767,7 @@ Can you confirm the order?`;
               >
                 <Phone className={Language === "ar" ? "ml-3" : "mr-3"} size={20} />
                 {showPhoneNumber
-                  ? product.customer.phone
+                  ? product.phone_number
                   : Language === "ar"
                   ? "إظهار رقم الهاتف"
                   : "Show Phone Number"}
@@ -703,8 +832,12 @@ Can you confirm the order?`;
                   </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">{Language === "ar" ? "معرف الفئة" : "Category ID"}</span>
-                      <span className="font-medium">{product.category_id}</span>
+                      <span className="text-gray-500">{Language === "ar" ? "الفئة الرئيسية" : "Main Category"}</span>
+                      <span className="font-medium">{product.main_category.name[Language]}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">{Language === "ar" ? "الفئة الفرعية" : "Sub Category"}</span>
+                      <span className="font-medium">{product.sub_category.name[Language]}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">{Language === "ar" ? "البلد" : "Country"}</span>
@@ -730,7 +863,7 @@ Can you confirm the order?`;
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">{Language === "ar" ? "الباركود" : "Barcode"}</span>
-                      <span className="font-medium">{product.barcode}</span>
+                      <span className="font-medium">{product.barcode || "N/A"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">{Language === "ar" ? "الرابط" : "Slug"}</span>
@@ -880,7 +1013,7 @@ Can you confirm the order?`;
           </h3>
           {similarProducts.length > 0 && (
             <a 
-              href={`/ads?category_id=${product.category.slug}`} 
+              href={`/ads?main_category_id=${product.main_category.slug}&sub_category_id=${product.sub_category.slug}`} 
               className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm font-medium"
             >
               {Language === "ar" ? "عرض الكل" : "View all"}
