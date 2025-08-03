@@ -120,7 +120,7 @@ export default function NavBanner() {
           className="text-sm font-medium py-1 px-3 whitespace-nowrap transition-all duration-200 ease-in-out rounded-md hover:bg-gray-50"
           onClick={navigateToHome}
         >
-          <div className="relative inline-flex items-center">
+          <div className="relative inline-flex items-center gap-1">
             <Home className="h-4 w-4 text-gray-700" />
             <span className="ml-2 text-gray-700">
               {Language === 'ar' ? 'الرئيسية' : 'Home'}

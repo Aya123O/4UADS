@@ -329,7 +329,7 @@ export default function Header() {
                 <Link
                   key={subcategory.id}
                   href={`/products/${subcategory.slug}`}
-                  className="group flex flex-col items-center text-sm font-medium text-gray-600 hover:text-primary transition duration-150 ease-in-out p-2 rounded-md hover:bg-gray-50"
+                  className="group flex flex-col items-center text-sm font-medium text-gray-600 hover:text-red transition duration-150 ease-in-out p-2 rounded-md hover:bg-gray-50"
                 >
                   {subcategory.icon_url ? (
                     <div className="w-10 h-10 mb-1.5 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -571,7 +571,7 @@ export default function Header() {
                     onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
                     onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
                     placeholder={currentContent.searchPlaceholder}
-                    className="w-full pl-9 pr-20 py-2 text-xs rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm hover:border-gray-400 transition-colors"
+                    className="w-full pl-9 pr-20 py-2 text-xs rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm hover:border-black-400 transition-colors"
                   />
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                   <Button 

@@ -567,27 +567,28 @@ Can you help me with the purchase?`;
                       { value: "price-asc", label: Language === 'ar' ? 'السعر (منخفض إلى مرتفع)' : 'Price (Low to High)' },
                       { value: "price-desc", label: Language === 'ar' ? 'السعر (مرتفع إلى منخفض)' : 'Price (High to Low)' },
                     ].map((option) => (
-                      <div key={option.value} className={`flex items-center ${Language === 'ar' ? 'flex-row-reverse' : ''}`}>
-                        <input
-                          id={`sort-${option.value}`}
-                          name="sort"
-                          type="radio"
-                          checked={sortOption === option.value}
-                          onChange={() => setSortOption(option.value as SortOption)}
-                          className="h-4 w-4 border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                        />
-                        <label htmlFor={`sort-${option.value}`} className={`text-sm text-gray-700 cursor-pointer ${
-                          Language === 'ar' ? 'mr-3' : 'ml-3'
-                        }`}>
-                          {option.label}
-                        </label>
+                      <div key={option.value} className={`flex items-center gap-2 ${Language === 'ar' ? 'flex-row-reverse' : ''}`}>
+                              <input
+                                id={`sort-${option.value}`}
+                                name="sort"
+                                type="radio"
+                                checked={sortOption === option.value}
+                                onChange={() => setSortOption(option.value as SortOption)}
+                                className="h-4 w-4 border-black text-red-600 focus:ring-red-600 cursor-pointer"
+                              />
+                            <label 
+                              htmlFor={`sort-${option.value}`} 
+                              className="text-sm text-black cursor-pointer"
+                            >
+                              {option.label}
+                            </label>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Price Range */}
-                <div>
+                <div> 
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     {Language === 'ar' ? 'نطاق السعر' : 'Price Range'} ({Language === 'ar' ? 'ر.س' : 'SAR'})
                   </label>
@@ -622,12 +623,12 @@ Can you help me with the purchase?`;
                 </div>
 
                 {/* Availability */}
-                <div>
+                <div className="">
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     {Language === 'ar' ? 'التوفر' : 'Availability'}
                   </label>
                   <div className="space-y-3">
-                    <div className={`flex items-center ${Language === 'ar' ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center gap-2 ${Language === 'ar' ? 'flex-row-reverse' : ''}`}>
                       <input
                         id="in-stock"
                         type="checkbox"
@@ -653,7 +654,7 @@ Can you help me with the purchase?`;
                     {Language === 'ar' ? 'العروض' : 'Discounts'}
                   </label>
                   <div className="space-y-3">
-                    <div className={`flex items-center ${Language === 'ar' ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center gap-2 ${Language === 'ar' ? 'flex-row-reverse' : ''}`}>
                       <input
                         id="discounted"
                         type="checkbox"
@@ -727,7 +728,7 @@ Can you help me with the purchase?`;
             {/* Products Grid */}
             {singleCategoryProducts ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                   {(processedProducts as Product[]).map((product) => (
                     <ProductCard 
                       key={product.id} 
@@ -828,7 +829,7 @@ Can you help me with the purchase?`;
                 <div>
                   <div className="mb-6">
                     <div className="flex items-center mb-4">
-                      <span className={`text-sm font-medium ${selectedProduct.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`text-sm font-medium ${selectedProduct.quantity > 0 ? 'text-black-600' : 'text-red-600'}`}>
                         {selectedProduct.quantity > 0 
                           ? (Language === 'ar' ? 'متوفر في المخزن' : 'In Stock')
                           : (Language === 'ar' ? 'غير متوفر' : 'Out of Stock')}
@@ -986,7 +987,7 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick }:
             
             {/* Stock Status and Quantity */}
             <div className="mt-2 flex items-center gap-2">
-              {/* <span className={`text-xs ${product.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {/* <span className={`text-xs ${product.quantity > 0 ? 'text-black-600' : 'text-red-600'}`}>
                 {product.quantity > 0 
                   ? `${product.quantity} ${language === 'ar' ? 'متوفر في المخزن' : 'In Stock'}`
                   : language === 'ar' ? 'نفذ من المخزن' : 'Out of Stock'}
@@ -1000,7 +1001,7 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick }:
             </div>
             
             {/* WhatsApp Button */}
-            <button
+             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1017,6 +1018,7 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick }:
               </svg>
               {language === 'ar' ? 'أطلب عبر واتساب' : 'Order via WhatsApp'}
             </button>
+           
           </div>
         </div>
       </div>

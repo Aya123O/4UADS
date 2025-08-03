@@ -115,8 +115,8 @@ export default function CompactCarImportGallery(): JSX.Element {
         pagination={{
           clickable: true,
           dynamicBullets: true,
-          renderBullet: (_index, className) => {
-            return `<span class="${className} !w-2 !h-2 !bg-white !opacity-30 hover:!opacity-100 !mx-1 !transition-all !duration-300"></span>`;
+          renderBullet: ( className) => {
+            return `<span class="${className} !w-2.5 !h-2.5 !bg-white !opacity-50 hover:!opacity-100 !mx-1 !transition-all !duration-300"></span>`;
           },
         }}
         effect="creative"
@@ -165,16 +165,17 @@ export default function CompactCarImportGallery(): JSX.Element {
             </div>
           </SwiperSlide>
         ))}
-      </Swiper>
 
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        className={`swiper-button-next !hidden md:!flex !h-12 !w-12 !rounded-full !bg-white/80 !backdrop-blur-sm !border !border-gray-200 hover:!bg-white !transition-all !duration-300 ${Language === 'ar' ? '!left-6' : '!right-6'} after:!text-gray-700 after:!text-2xl after:!font-bold group-hover:!opacity-100 !opacity-0 shadow-lg`}
-      ></motion.div>
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        className={`swiper-button-prev !hidden md:!flex !h-12 !w-12 !rounded-full !bg-white/80 !backdrop-blur-sm !border !border-gray-200 hover:!bg-white !transition-all !duration-300 ${Language === 'ar' ? '!right-6' : '!left-6'} after:!text-gray-700 after:!text-2xl after:!font-bold group-hover:!opacity-100 !opacity-0 shadow-lg`}
-      ></motion.div>
+        <div className={`swiper-button-next !h-10 !w-10 md:!h-12 md:!w-12 !rounded-full !bg-white/80 !backdrop-blur-sm !border !border-gray-200 hover:!bg-white !transition-all !duration-300 ${
+          Language === 'ar' ? '!left-2 md:!left-6' : '!right-2 md:!right-6'
+        } after:!text-gray-700 after:!text-xl md:after:!text-2xl after:!font-bold !opacity-80 hover:!opacity-100 shadow-lg`}></div>
+        
+        <div className={`swiper-button-prev !h-10 !w-10 md:!h-12 md:!w-12 !rounded-full !bg-white/80 !backdrop-blur-sm !border !border-gray-200 hover:!bg-white !transition-all !duration-300 ${
+          Language === 'ar' ? '!right-2 md:!right-6' : '!left-2 md:!left-6'
+        } after:!text-gray-700 after:!text-xl md:after:!text-2xl after:!font-bold !opacity-80 hover:!opacity-100 shadow-lg`}></div>
+
+        <div className="swiper-pagination !bottom-4 !left-0 !right-0 !w-auto !flex !justify-center !items-center !gap-1"></div>
+      </Swiper>
     </div>
   );
 }
