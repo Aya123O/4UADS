@@ -129,52 +129,54 @@ export default function CategoriesAndListings({
         )}
       </div>
 
-      <div className="p-5">
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="font-bold text-gray-900 line-clamp-2 text-lg">
-            {product.name[Language]}
-          </h3>
-          <div className="flex flex-col items-end">
-            <span className="font-bold text-xl text-gray-900">
-              {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
-            </span>
-            {product.discount > 0 && (
-              <span className="text-sm text-gray-500 line-through">
-                {product.price} {Language === "ar" ? "ج.م" : "EGP"}
-              </span>
-            )}
-          </div>
-        </div>
+       <div className="p-5">
+  {/* Product name and price row - becomes column on sm */}
+  <div className="flex flex-col sm:flex-row sm:justify-between items-start mb-3 gap-2 sm:gap-0">
+    <h3 className="font-bold text-gray-900 line-clamp-2 text-lg">
+      {product.name[Language]}
+    </h3>
+    <div className="flex flex-col items-start sm:items-end">
+      <span className="font-bold text-xl text-gray-900">
+        {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
+      </span>
+      {product.discount > 0 && (
+        <span className="text-sm text-gray-500 line-through">
+          {product.price} {Language === "ar" ? "ج.م" : "EGP"}
+        </span>
+      )}
+    </div>
+  </div>
 
-        {product.rating && (
-          <div className="flex items-center gap-1 mb-4">
-            {renderStars(product.rating)}
-            <span className="text-xs text-gray-500 ml-1">
-              ({product.rating.toFixed(1)})
-            </span>
-          </div>
-        )}
+  {/* Rating (unchanged - stays row on all screens) */}
+  {product.rating && (
+    <div className="flex items-center gap-1 mb-4">
+      {renderStars(product.rating)}
+      <span className="text-xs text-gray-500 ml-1">
+        ({product.rating.toFixed(1)})
+      </span>
+    </div>
+  )}
 
-        <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-          <span className="text-sm text-gray-500">
-            {Language === "ar" ? "الكمية:" : "Qty:"}{" "}
-            <span className="font-medium">{product.quantity}</span>
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-sm h-9 border-red-100 hover:bg-red-50 hover:text-red-600 text-red-500 rounded-lg transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToProduct(product.slug);
-            }}
-          >
-            {Language === "ar" ? "التفاصيل" : "Details"}
-          </Button>
-        </div>
-      </div>
-      {/* Add a subtle overlay for better hover effect */}
-<div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br from-gray-100 to-black transition-opacity duration-300 pointer-events-none"></div>
+  {/* Quantity and button - becomes column on sm */}
+  <div className="flex flex-col sm:flex-row sm:justify-between items-center pt-4 border-t border-gray-100 gap-3 sm:gap-0">
+    <span className="text-sm text-gray-500">
+      {Language === "ar" ? "الكمية:" : "Qty:"}{" "}
+      <span className="font-medium">{product.quantity}</span>
+    </span>
+    <Button
+      variant="outline"
+      size="sm"
+      className="text-sm h-9 border-red-100 bg-red-500  hover:bg-red-500 hover:text-white  text-white  rounded-lg  w-full sm:w-auto"
+      onClick={(e) => {
+        e.stopPropagation();
+        navigateToProduct(product.slug);
+      }}
+    >
+      {Language === "ar" ? "التفاصيل" : "Details"}
+    </Button>
+  </div>
+</div>
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br from-gray-100 to-black transition-opacity duration-300 pointer-events-none"></div>
     </div>
   );
 
@@ -188,7 +190,7 @@ export default function CategoriesAndListings({
                 <Skeleton className="h-10 w-56 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
                 <Skeleton className="h-8 w-28 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
               </div>
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1, 2, 3, 4].map((product) => (
                   <div key={product} className="space-y-4 group">
                     <Skeleton className="h-60 w-full rounded-2xl bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 group-hover:opacity-90 transition-opacity" />
@@ -242,7 +244,7 @@ export default function CategoriesAndListings({
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {products.map((product, index) => (
               <ProductCard key={index} product={product} />
             ))}
@@ -265,7 +267,7 @@ export default function CategoriesAndListings({
             <div className="w-24 h-1 bg-gradient-to-r from-red-500 to-orange-400 mx-auto rounded-full"></div>
           </div>
 
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {allProducts.map((product, index) => (
               <ProductCard key={index} product={product} />
             ))}
@@ -345,8 +347,7 @@ export default function CategoriesAndListings({
               )}
             </div>
 
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {categoryWithProducts.products.map((product, index) => (
+           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">              {categoryWithProducts.products.map((product, index) => (
                 <ProductCard key={index} product={product} />
               ))}
             </div>
@@ -414,7 +415,7 @@ export default function CategoriesAndListings({
               )}
             </div>
 
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
               {categoryWithProducts.products.map((product, index) => (
                 <ProductCard key={index} product={product} />
               ))}

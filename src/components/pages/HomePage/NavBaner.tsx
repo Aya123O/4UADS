@@ -153,7 +153,7 @@ export default function NavBanner() {
             className={`text-sm font-medium py-1 px-3 whitespace-nowrap transition-all duration-200 ease-in-out relative rounded-md mx-0
               ${
                 activeCategory?.id === category.id
-                  ? "text-white bg-red-600 hover:bg-red-700"
+                  ? "bg-red-100 text-red-500 shadow-md hover:bg-red-200 hover:text-red-500 transition-all"
                   : "text-gray-700 hover:bg-gray-50"
               }`}
             onClick={() => handleCategoryClick(category)}
@@ -162,9 +162,9 @@ export default function NavBanner() {
               {category.name[Language]}
               {category.sub_categories?.length > 0 && (
                 <ChevronDown
-                  className={`ml-1 h-4 w-4 transition-transform duration-200 ${
+                  className={`ml-2 h-4 w-4 transition-transform duration-200 ${
                     activeCategory?.id === category.id 
-                      ? "transform rotate-180 text-white" 
+                      ? "transform rotate-180 text-red" 
                       : "text-gray-500 group-hover:text-gray-700"
                   }`}
                 />

@@ -772,99 +772,95 @@ Can you confirm the order?`;
           {/* Contact Buttons with enhanced styling */}
           <div className="space-y-4 sticky bottom-4 bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-gray-100">
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button
+               <Button
                 onClick={handleShowPhoneNumber}
-                className="flex-1 h-14 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                className="flex-1 h-14 bg-red-100 text-red-500 shadow-md hover:bg-red-200 transition-all"
               >
-                <Phone className={Language === "ar" ? "ml-3" : "mr-3"} size={20} />
+                <Phone className={`${Language === "ar" ? "ml-3" : "mr-3"} text-red-500`} size={20} />
                 {showPhoneNumber
                   ? product.phone_number
                   : Language === "ar"
                   ? "إظهار رقم الهاتف"
                   : "Show Phone Number"}
               </Button>
+
               
-              <Button
+             <Button
                 onClick={handleWhatsAppClick}
-                className="flex-1 h-14 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                className="flex-1 h-14 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
               >
-                <MessageCircle className={Language === "ar" ? "ml-3" : "mr-3"} size={20} />
+                <MessageCircle className={`${Language === "ar" ? "ml-3" : "mr-3"} text-green-700`} size={20} />
                 {Language === "ar" ? "إرسال الطلب عبر واتساب" : "Order via WhatsApp"}
               </Button>
+
             </div>
           </div>
         </div>
       </div>
 
-      {/* Product Description with tabs */}
       <div className="mt-16">
-        <Tabs defaultValue="description" className="w-full">
-          <TabsList className="w-full justify-start bg-transparent p-0 border-b border-gray-200 rounded-none">
-          
-            <TabsTrigger 
-              value="details" 
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
-            >
-              {Language === "ar" ? "تفاصيل المنتج" : "Product Details"}
-            </TabsTrigger>
-          
-          </TabsList>
-          
-          
-          <TabsContent value="details" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-gray-100 shadow-sm">
-                <CardContent className="p-6 space-y-4">
-                  <h4 className="font-semibold text-lg">
-                    {Language === "ar" ? "معلومات المنتج" : "Product Info"}
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{Language === "ar" ? "الفئة الرئيسية" : "Main Category"}</span>
-                      <span className="font-medium">{product.main_category.name[Language]}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{Language === "ar" ? "الفئة الفرعية" : "Sub Category"}</span>
-                      <span className="font-medium">{product.sub_category.name[Language]}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{Language === "ar" ? "البلد" : "Country"}</span>
-                      <span className="font-medium">{product.country.name[Language]}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{Language === "ar" ? "المدينة" : "City"}</span>
-                      <span className="font-medium">{product.city.name[Language]}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-gray-100 shadow-sm">
-                <CardContent className="p-6 space-y-4">
-                  <h4 className="font-semibold text-lg">
-                    {Language === "ar" ? "المعرفات" : "Identifiers"}
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">SKU</span>
-                      <span className="font-medium">{product.sku}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{Language === "ar" ? "الباركود" : "Barcode"}</span>
-                      <span className="font-medium">{product.barcode || "N/A"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">{Language === "ar" ? "الرابط" : "Slug"}</span>
-                      <span className="font-medium">{product.slug}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+         <Tabs defaultValue="details" className="w-full">
+  <TabsList className="w-full justify-start bg-transparent p-0 border-b border-gray-200 rounded-none">
+    <TabsTrigger 
+      value="details" 
+      className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+    >
+      {Language === "ar" ? "تفاصيل المنتج" : "Product Details"}
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="details" className="mt-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card className="border-gray-100 shadow-sm">
+        <CardContent className="p-6 space-y-4">
+          <h4 className="font-semibold text-lg">
+            {Language === "ar" ? "معلومات المنتج" : "Product Info"}
+          </h4>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-500">{Language === "ar" ? "الفئة الرئيسية" : "Main Category"}</span>
+              <span className="font-medium">{product.main_category?.name?.[Language] || "N/A"}</span>
             </div>
-          </TabsContent>
-          
-       
-        </Tabs>
+            <div className="flex justify-between">
+              <span className="text-gray-500">{Language === "ar" ? "الفئة الفرعية" : "Sub Category"}</span>
+              <span className="font-medium">{product.sub_category?.name?.[Language] || "N/A"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">{Language === "ar" ? "البلد" : "Country"}</span>
+              <span className="font-medium">{product.country?.name?.[Language] || "N/A"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">{Language === "ar" ? "المدينة" : "City"}</span>
+              <span className="font-medium">{product.city?.name?.[Language] || "N/A"}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="border-gray-100 shadow-sm">
+        <CardContent className="p-6 space-y-4">
+          <h4 className="font-semibold text-lg">
+            {Language === "ar" ? "المعرفات" : "Identifiers"}
+          </h4>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-500">SKU</span>
+              <span className="font-medium">{product.sku || "N/A"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">{Language === "ar" ? "الباركود" : "Barcode"}</span>
+              <span className="font-medium">{product.barcode || "N/A"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">{Language === "ar" ? "الرابط" : "Slug"}</span>
+              <span className="font-medium">{product.slug || "N/A"}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </TabsContent>
+</Tabs>
       </div>
 
       {/* Seller Information with enhanced card */}
@@ -888,13 +884,7 @@ Can you confirm the order?`;
                   />
                 </div>
                 
-                <div className="mt-4 text-center">
-                  <h4 className="font-bold text-lg">{product.customer.name}</h4>
-                  <div className="flex items-center justify-center gap-1 mt-2">
-                    {renderStars(4.8)}
-                    <span className="text-sm text-gray-500">(12)</span>
-                  </div>
-                </div>
+               
               </div>
               
               <div className="flex-1 p-6">
@@ -927,18 +917,11 @@ Can you confirm the order?`;
                 <Separator className="my-6" />
                 
                 <div className="flex flex-wrap gap-3">
-               <Button 
-                  variant="default" 
-                  className="flex items-center gap-2 bg-gradient-to-r from-black via-red-500 to-white text-white hover:opacity-90 transition duration-300"
-                  onClick={handleShowPhoneNumber}
-                >
-                    <Phone className="w-4 h-4" />
-                    {Language === "ar" ? "اتصال" : "Call"}
-                  </Button>
+              
                  
                   <Button 
                     variant="outline" 
-                    className="flex items-center gap-2 border-gray-200 hover:bg-gray-50"
+                    className="flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
                     onClick={handleWhatsAppClick}
                   >
                     <MessageCircle className="w-4 h-4" />

@@ -315,6 +315,14 @@ export default function Header() {
     }
   };
 
+  // New function to handle search icon click
+  const handleSearchIconClick = () => {
+    if (searchTerm.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+      setShowSearchResults(false);
+    }
+  };
+
   const renderDesktopSubcategories = () => (
     <div className="hidden md:block">
       {activeCategory && activeCategory.sub_categories && activeCategory.sub_categories.length > 0 && (
@@ -559,30 +567,36 @@ export default function Header() {
 </Link>
 
             <div className="flex-1 max-w-2xl mx-3 relative">
-              <form onSubmit={handleSearchSubmit}>
-                <div className="relative">
-                  <Input
-                    type="search"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setShowSearchResults(e.target.value.trim().length > 0);
-                    }}
-                    onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
-                    onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
-                    placeholder={currentContent.searchPlaceholder}
-                    className="w-full pl-9 pr-20 py-2 text-xs rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm hover:border-black-400 transition-colors"
-                  />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                  <Button 
-                    type="submit"
-                    variant="default" 
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-red-600 hover:bg-red-700 h-6 px-3 text-xs shadow-sm rounded-full"
-                  >
-                    {Language === 'ar' ? 'بحث' : 'Search'}
-                  </Button>
-                </div>
-              </form>
+                <form onSubmit={handleSearchSubmit}>
+    <div className="relative">
+      <Input
+        type="search"
+        value={searchTerm}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          setShowSearchResults(e.target.value.trim().length > 0);
+        }}
+        onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
+        onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+        placeholder={currentContent.searchPlaceholder}
+        className="w-full pl-12 pr-20 py-2 text-xs rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm hover:border-black-400 transition-colors"
+      />
+      <button 
+        type="button"
+        onClick={handleSearchIconClick}
+        className="absolute left-1 top-1/2 transform -translate-y-1/2  bg-red-100 text-red-500  hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full  shadow-sm "
+      >
+        <Search className="h-3.5 w-3.5" />
+      </button>
+      <Button 
+        type="submit"
+        variant="default" 
+        className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500  hover:bg-red-200 transition-all h-6 px-3 text-xs shadow-sm rounded-full"
+      >
+        {Language === 'ar' ? 'بحث' : 'Search'}
+      </Button>
+    </div>
+  </form>
 
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto transition-all duration-150 ease-in-out">
@@ -659,19 +673,7 @@ export default function Header() {
               )}
             </div>
 
-            <div className="flex lg:hidden items-center">
-              <button 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1 rounded-md text-gray-600 hover:text-red-600 hover:bg-gray-100 focus:outline-none transition-colors"
-                aria-label="Toggle menu"
-              >
-                {isMobileMenuOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
-              </button>
-            </div>
+           
           </div>
         </div>
       </div>     
