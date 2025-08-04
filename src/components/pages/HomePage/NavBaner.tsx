@@ -554,14 +554,16 @@ export default function NavBanner() {
             placeholder={currentContent.searchPlaceholder}
             className="w-full pl-10 pr-3 py-2 text-sm rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm"
           />
-          <button 
-            type="button"
-            onClick={handleMobileSearchIconClick}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm"
-          >
-            <Search className="h-3.5 w-3.5" />
-          </button>
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          {  
+             <button 
+                type="button"
+                onClick={handleMobileSearchIconClick}
+                className={`absolute ${Language === 'ar' ? 'left-1' : 'right-3'} top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm`}
+              >
+                <Search className="h-3.5 w-3.5" />
+              </button>
+          
+          }
         </div>
 
         {/* Mobile Search Results */}
