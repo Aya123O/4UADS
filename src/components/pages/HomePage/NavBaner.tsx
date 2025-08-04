@@ -710,6 +710,7 @@ export default function NavBanner() {
         {/* Categories - Horizontal Scroll with buttons */}
            <div className="relative px-3 py-2 border-b border-gray-200">
   <div className="flex items-center">
+    {/* Left scroll button (only visible when not at start) - conditionally rendered based on language */}
     {Language === 'en' && mobileScrollLeft > 0 && (
       <button
         onClick={() => scrollMobileCategories('left')}
