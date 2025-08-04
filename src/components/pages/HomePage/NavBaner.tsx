@@ -1,9 +1,22 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { ChevronDown, Menu, X, Home } from "lucide-react";
+
+import React, { useState, useEffect, useRef } from "react";
+import { 
+  ChevronDown, 
+  Menu, 
+  X, 
+  Home,
+  Search,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/Context/LanguageContext";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 
 interface Category {
   id: number;
@@ -27,6 +40,70 @@ interface Subcategory {
   icon_url: string | null;
 }
 
+interface Country {
+  id: number;
+  name: {
+    ar: string;
+    en: string;
+  };
+  cities: City[];
+}
+
+interface City {
+  id: number;
+  name: {
+    ar: string;
+    en: string;
+  };
+  country_id: number;
+}
+
+interface SearchResult {
+  id: number;
+  name: string;
+  slug: string;
+  type: 'product' | 'category';
+  image_url?: string;
+}
+
+const SEARCH_API = "https://new.4youad.com/api/products/search";
+const CATEGORIES_API = "https://new.4youad.com/api/categories";
+const COUNTRIES_API = "https://new.4youad.com/api/countries";
+const BUSINESS_API = "https://new.4youad.com/api/settings/business";
+
+const content = {
+  ar: {
+    searchPlaceholder: "ابحث عن سيارات، ماركات، موديلات...",
+    categories: "الفئات",
+    noResults: "لا توجد نتائج",
+    allProducts: "جميع المنتجات",
+    allCategories: "جميع الفئات",
+    selectCountry: "اختر الدولة",
+    selectCity: "اختر المدينة",
+    selectLocation: "اختر الموقع",
+    home: "الرئيسية",
+    search: "بحث",
+    cars: "سيارات",
+    hotels: "فنادق",
+    electronics: "الكترونيات"
+  },
+  en: {
+    searchPlaceholder: "Search for cars, makes, models...",
+    categories: "Categories",
+    noResults: "No results found",
+    allProducts: "All Products",
+    allCategories: "All Categories",
+    selectCountry: "Select Country",
+    selectCity: "Select City",
+    selectLocation: "Select Location",
+    home: "Home",
+    search: "Search",
+    cars: "Cars",
+    hotels: "Hotels",
+    electronics: "Electronics"
+  }
+};
+
 export default function NavBanner() {
   const [activeCategory, setActiveCategory] = useState<Category | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,30 +113,235 @@ export default function NavBanner() {
   const [isHovering, setIsHovering] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [businessInfo, setBusinessInfo] = useState<any>(null);
+  const currentContent = content[Language];
+  const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const mobileCategoriesRef = useRef<HTMLDivElement>(null);
+  const [mobileScrollLeft, setMobileScrollLeft] = useState(0);
+  const [mobileScrollRight, setMobileScrollRight] = useState(0);
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const toggleLocationDropdown = () => {
+  setIsLocationDropdownOpen(!isLocationDropdownOpen);
+};
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("https://new.4youad.com/api/categories");
-        if (!response.ok) throw new Error("Failed to fetch categories");
-        const data = await response.json();
+        const [categoriesResponse, countriesResponse, businessResponse] = await Promise.all([
+          fetch(CATEGORIES_API),
+          fetch(COUNTRIES_API),
+          fetch(BUSINESS_API)
+        ]);
         
-        const uniqueCategories = data.data.filter(
-          (category: Category, index: number, self: Category[]) =>
-            index === self.findIndex((c) => c.id === category.id)
-        );
+        const categoriesData = await categoriesResponse.json();
+        // Add our special categories if they don't exist
+        const defaultCategories = [
+          {
+            id: 1001,
+            slug: "cars",
+            name: { ar: "سيارات", en: "Cars" },
+            icon_url: null,
+            sub_categories: []
+          },
+          {
+            id: 1002,
+            slug: "hotels",
+            name: { ar: "فنادق", en: "Hotels" },
+            icon_url: null,
+            sub_categories: []
+          },
+          {
+            id: 1003,
+            slug: "electronics",
+            name: { ar: "الكترونيات", en: "Electronics" },
+            icon_url: null,
+            sub_categories: []
+          }
+        ];
         
-        setCategories(uniqueCategories);
+        // Merge API categories with our default categories
+        const mergedCategories = [...defaultCategories, ...categoriesData.data];
+        setCategories(mergedCategories);
+        
+        const countriesData = await countriesResponse.json();
+        setCountries(countriesData.data);
+        
+        const businessData = await businessResponse.json();
+        setBusinessInfo(businessData.data);
+        
+        const saudiArabia = countriesData.data.find((c: Country) => c.id === 2);
+        if (saudiArabia) {
+          setSelectedCountry(saudiArabia);
+          const riyadh = saudiArabia.cities.find((city: City) => city.id === 6);
+          if (riyadh) {
+            setSelectedCity(riyadh);
+          }
+        }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchCategories();
+    fetchData();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+      if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (searchTerm.trim() === "") {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(SEARCH_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            search: searchTerm,
+            lang: Language
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        const transformedResults: SearchResult[] = [];
+        
+        if (data.data?.categories && Array.isArray(data.data.categories)) {
+          data.data.categories.forEach((category: any) => {
+            transformedResults.push({
+              id: category.id,
+              name: category.name[Language] || category.name.en || category.name.ar || 'Unnamed Category',
+              slug: category.slug,
+              type: 'category',
+              image_url: category.icon_url || null
+            });
+          });
+        }
+        
+        if (data.data?.products && Array.isArray(data.data.products)) {
+          data.data.products.forEach((product: any) => {
+            transformedResults.push({
+              id: product.id,
+              name: product.name[Language] || product.name.en || product.name.ar || 'Unnamed Product',
+              slug: product.slug,
+              type: 'product',
+              image_url: product.main_image_url || null
+            });
+          });
+        }
+
+        setSearchResults(transformedResults);
+      } catch (error) {
+        console.error("Error fetching search results:", error);
+        setSearchResults([]);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      if (searchTerm.trim()) {
+        fetchSearchResults();
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, Language]);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 200;
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollMobileCategories = (direction: 'left' | 'right') => {
+    if (mobileCategoriesRef.current) {
+      const scrollAmount = 150;
+      mobileCategoriesRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+      
+      // Update scroll position states
+      setTimeout(() => {
+        if (mobileCategoriesRef.current) {
+          const { scrollLeft, scrollWidth, clientWidth } = mobileCategoriesRef.current;
+          setMobileScrollLeft(scrollLeft);
+          setMobileScrollRight(scrollWidth - clientWidth - scrollLeft);
+        }
+      }, 300);
+    }
+  };
+
+  useEffect(() => {
+    // Initialize scroll position for mobile categories
+    if (mobileCategoriesRef.current) {
+      const { scrollWidth, clientWidth } = mobileCategoriesRef.current;
+      setMobileScrollRight(scrollWidth - clientWidth);
+    }
+  }, [categories, isMobileMenuOpen]);
+
+  const toggleCountryDropdown = () => {
+    setIsCountryDropdownOpen(!isCountryDropdownOpen);
+    setIsCityDropdownOpen(false);
+  };
+
+  const toggleCityDropdown = () => {
+    if (selectedCountry) {
+      setIsCityDropdownOpen(!isCityDropdownOpen);
+      setIsCountryDropdownOpen(false);
+    }
+  };
+
+  const handleSelectCountry = (country: Country) => {
+    setSelectedCountry(country);
+    setSelectedCity(null);
+    setIsCountryDropdownOpen(false);
+  };
+
+  const handleSelectCity = (city: City) => {
+    setSelectedCity(city);
+    setIsCityDropdownOpen(false);
+  };
 
   const navigateToProducts = (categorySlug: string) => {
     router.push(`/products?category_slug=${encodeURIComponent(categorySlug)}`);
@@ -95,6 +377,29 @@ export default function NavBanner() {
     setActiveCategory(null);
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+      setShowSearchResults(false);
+    }
+  };
+
+  const handleSearchIconClick = () => {
+    if (searchTerm.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+      setShowSearchResults(false);
+    }
+  };
+
+  const handleMobileSearchIconClick = () => {
+    if (searchTerm.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+      setShowSearchResults(false);
+      setIsMobileMenuOpen(false);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -117,62 +422,69 @@ export default function NavBanner() {
       <div className="relative group">
         <Button
           variant="ghost"
-          className="text-sm font-medium py-1 px-3 whitespace-nowrap transition-all duration-200 ease-in-out rounded-md hover:bg-gray-50"
+          className="text-sm font-bold py-1 px-3 whitespace-nowrap transition-all duration-200 ease-in-out rounded-md hover:bg-gray-50"
           onClick={navigateToHome}
         >
           <div className="relative inline-flex items-center gap-1">
             <Home className="h-4 w-4 text-gray-700" />
-            <span className="ml-2 text-gray-700">
-              {Language === 'ar' ? 'الرئيسية' : 'Home'}
+            <span className="ml-2 text-gray-700 font-bold">
+              {currentContent.home}
             </span>
           </div>
         </Button>
       </div>
       
-      {categories.map((category) => (
-        <div 
-          key={category.id} 
-          className="relative group"
-          onMouseEnter={() => {
-            if (category.sub_categories?.length > 0) {
-              setActiveCategory(category);
-              setIsHovering(true);
-            }
-          }}
-          onMouseLeave={() => {
-            setIsHovering(false);
-            setTimeout(() => {
-              if (!isHovering) {
-                setActiveCategory(null);
+      {/* Categories container with scroll */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 flex overflow-x-auto scrollbar-hide gap-1 lg:gap-2 px-1"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {categories.map((category) => (
+          <div 
+            key={category.id} 
+            className="relative group flex-shrink-0"
+            onMouseEnter={() => {
+              if (category.sub_categories?.length > 0) {
+                setActiveCategory(category);
+                setIsHovering(true);
               }
-            }, 200);
-          }}
-        >
-          <Button
-            variant="ghost"
-            className={`text-sm font-medium py-1 px-3 whitespace-nowrap transition-all duration-200 ease-in-out relative rounded-md mx-0
-              ${
-                activeCategory?.id === category.id
-                  ? "bg-red-100 text-red-500 shadow-md hover:bg-red-200 hover:text-red-500 transition-all"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            onClick={() => handleCategoryClick(category)}
+            }}
+            onMouseLeave={() => {
+              setIsHovering(false);
+              setTimeout(() => {
+                if (!isHovering) {
+                  setActiveCategory(null);
+                }
+              }, 200);
+            }}
           >
-            <div className="flex items-center">
-              {category.name[Language]}
-              {category.sub_categories?.length > 0 && (
-                <ChevronDown
-                  className={`ml-2 h-4 w-4 transition-transform duration-200 ${
-                    activeCategory?.id === category.id 
-                      ? "transform rotate-180 text-red" 
-                      : "text-gray-500 group-hover:text-gray-700"
-                  }`}
-                />
-              )}
-            </div>
-          </Button>
-        </div>
-      ))}
+            <Button
+              variant="ghost"
+              className={`text-sm font-bold py-1 px-3 whitespace-nowrap transition-all duration-200 ease-in-out relative rounded-md mx-0
+                ${
+                  activeCategory?.id === category.id
+                    ? "bg-red-100 text-red-500 shadow-md hover:bg-red-200 hover:text-red-500 transition-all"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              onClick={() => handleCategoryClick(category)}
+            >
+              <div className="flex items-center">
+                {category.name[Language]}
+                {category.sub_categories?.length > 0 && (
+                  <ChevronDown
+                    className={`ml-2 h-4 w-4 transition-transform duration-200 ${
+                      activeCategory?.id === category.id 
+                        ? "transform rotate-180 text-red" 
+                        : "text-gray-500 group-hover:text-gray-700"
+                    }`}
+                  />
+                )}
+              </div>
+            </Button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
@@ -180,9 +492,26 @@ export default function NavBanner() {
     <div className="md:hidden">
       <div className="flex items-center justify-between py-2 px-4 border-b border-gray-200 bg-white">
         <div className="flex items-center">
-          <span className="text-lg font-bold text-gray-800">
-            4YOU<span className="text-red-600">AD</span>
-          </span>
+          {businessInfo?.business_logo_url ? (
+            <div className="flex items-center gap-2">
+              <div className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-red-200">
+                <Image
+                  src={businessInfo.business_logo_url}
+                  alt={businessInfo.business_name?.[Language] || "4YOUAD"}
+                  width={40}
+                  height={40}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <span className="text-lg font-bold text-gray-800">
+                4YOU<span className="text-red-600">AD</span>
+              </span>
+            </div>
+          ) : (
+            <span className="text-lg font-bold text-gray-800">
+              4YOU<span className="text-red-600">AD</span>
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -208,56 +537,283 @@ export default function NavBanner() {
         </div>
       </div>
 
-      {isMobileMenuOpen && (
-        <div className="bg-white shadow-lg border-t border-gray-200">
-          <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
-            {categories.map((category) => (
-              <div key={category.id} className="border-b border-gray-200 last:border-b-0">
-                <Button
-                  variant="ghost"
-                  className={`w-full text-right justify-between py-2 px-4 text-sm transition-colors rounded-none ${
-                    activeCategory?.id === category.id
-                      ? "bg-red-50 text-red-700 font-medium"
-                      : "hover:bg-gray-50 text-gray-700 font-normal"
-                  }`}
-                  onClick={() => handleCategoryClick(category)}
-                >
-                  <div className="flex items-center">
-                    <span className={activeCategory?.id === category.id ? "font-medium" : ""}>
-                      {category.name[Language]}
-                    </span>
+       {isMobileMenuOpen && (
+  <div className="bg-white shadow-lg border-t border-gray-200">
+    <div className="overflow-y-visible"> {/* Changed from overflow-y-auto to overflow-y-visible */}
+      {/* Mobile Search */}
+      <div className="p-3 border-b border-gray-200" ref={mobileSearchRef}>
+        <div className="relative flex items-center">
+          <Input
+            type="search"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setShowSearchResults(e.target.value.trim().length > 0);
+            }}
+            onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
+            placeholder={currentContent.searchPlaceholder}
+            className="w-full pl-10 pr-3 py-2 text-sm rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm"
+          />
+          <button 
+            type="button"
+            onClick={handleMobileSearchIconClick}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm"
+          >
+            <Search className="h-3.5 w-3.5" />
+          </button>
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+        </div>
+
+        {/* Mobile Search Results */}
+        {showSearchResults && searchResults.length > 0 && (
+          <div className="absolute  z-[100]  left-0 right-0 mt-1 mx-3 bg-white rounded-lg shadow-lg border border-gray-200  max-h-72 overflow-y-auto">
+            <div className="divide-y divide-gray-100 ">
+              {searchResults.some(r => r.type === 'category') && (
+                <div>
+                  <div className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 uppercase tracking-wider">
+                    {currentContent.allCategories}
                   </div>
-                  {category.sub_categories?.length > 0 && (
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform duration-200 ${
-                        activeCategory?.id === category.id 
-                          ? "transform rotate-180 text-red-700" 
-                          : "text-gray-500"
-                      }`}
-                    />
-                  )}
-                </Button>
-                
-                {activeCategory?.id === category.id && category.sub_categories && (
-                  <div className="bg-gray-50 px-4 py-1 border-l-2 border-red-600">
-                    <div className="flex flex-col space-y-0">
-                      {category.sub_categories.map((subcategory) => (
-                        <button
-                          key={subcategory.id}
-                          onClick={() => handleSubcategoryClick(subcategory)}
-                          className="text-xs text-gray-700 hover:text-red-700 transition duration-150 ease-in-out py-2 px-3 rounded-md hover:bg-red-100 text-start"
+                  <div className="grid grid-cols-1">
+                    {searchResults
+                      .filter(r => r.type === 'category')
+                      .map((result) => (
+                        <Link
+                          key={`cat-${result.id}`}
+                          href={`/products/${result.slug}`}
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
                         >
-                          <span className="font-medium">{subcategory.name[Language]}</span>
-                        </button>
+                          {result.image_url ? (
+                            <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
+                              <img 
+                                src={result.image_url} 
+                                alt={result.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded flex items-center justify-center">
+                              <Search className="h-2.5 w-2.5 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="truncate">{result.name}</span>
+                        </Link>
                       ))}
-                    </div>
                   </div>
-                )}
+                </div>
+              )}
+
+              {searchResults.some(r => r.type === 'product') && (
+                <div>
+                  <div className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 uppercase tracking-wider">
+                    {currentContent.allProducts}
+                  </div>
+                  <div className="grid grid-cols-1">
+                    {searchResults
+                      .filter(r => r.type === 'product')
+                      .map((result) => (
+                        <Link
+                          key={`prod-${result.id}`}
+                          href={`/product/${result.slug}`}
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
+                        >
+                          {result.image_url ? (
+                            <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
+                              <img 
+                                src={result.image_url} 
+                                alt={result.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded flex items-center justify-center">
+                              <Search className="h-2.5 w-2.5 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="truncate">{result.name}</span>
+                        </Link>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Combined Country and City Selector */}
+        <div className="mt-2">
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleLocationDropdown}
+              className="w-full text-sm justify-between font-semibold"
+            >
+              <span className="truncate">
+                {selectedCountry && selectedCity 
+                  ? `${selectedCountry.name[Language]}, ${selectedCity.name[Language]}`
+                  : selectedCountry
+                    ? `${selectedCountry.name[Language]} - ${currentContent.selectCity}`
+                    : currentContent.selectLocation}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 ml-1" />
+            </Button>
+            
+            {isLocationDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg border border-gray-200">
+                {/* Country List */}
+                <div className="max-h-[50vh] overflow-y-auto">
+                  {countries.map((country) => (
+                    <div key={country.id}>
+                      <button
+                        onClick={() => handleSelectCountry(country)}
+                        className={`block w-full text-left px-3 py-2 text-sm ${
+                          selectedCountry?.id === country.id 
+                            ? 'bg-red-50 text-red-700 font-semibold' 
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {country.name[Language]}
+                      </button>
+                      
+                      {/* Cities for selected country */}
+                      {selectedCountry?.id === country.id && (
+                        <div className="pl-4 border-l-2 border-gray-100">
+                          {country.cities.map((city) => (
+                            <button
+                              key={city.id}
+                              onClick={() => {
+                                handleSelectCity(city);
+                                setIsLocationDropdownOpen(false);
+                              }}
+                              className={`block w-full text-left px-3 py-2 text-sm ${
+                                selectedCity?.id === city.id 
+                                  ? 'bg-red-50 text-red-700 font-semibold' 
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              {city.name[Language]}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
-      )}
+      </div>
+    </div>
+  </div>
+)}
+        {/* Categories - Horizontal Scroll with buttons */}
+           <div className="relative px-3 py-2 border-b border-gray-200">
+  <div className="flex items-center">
+    {Language === 'en' && mobileScrollLeft > 0 && (
+      <button
+        onClick={() => scrollMobileCategories('left')}
+        className="p-1 rounded-full bg-white shadow-md text-gray-600 hover:bg-gray-100 mr-1 z-0"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+    )}
+
+    {/* Right scroll button for RTL (Arabic) - shown on the left side */}
+    {Language === 'ar' && mobileScrollRight > 0 && (
+      <button
+        onClick={() => scrollMobileCategories('right')}
+        className="p-1 rounded-full bg-white shadow-md text-gray-600 hover:bg-gray-100 mr-1 z-0"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    )}
+
+    {/* Categories container with scroll */}
+    <div 
+      ref={mobileCategoriesRef}
+      className="flex-1 overflow-x-auto whitespace-nowrap scrollbar-hide"
+      style={{ 
+        scrollbarWidth: 'none',
+        direction: Language === 'ar' ? 'rtl' : 'ltr' // Set direction based on language
+      }}
+    >
+      {categories.map((category) => (
+        <div key={category.id} className={`inline-block ${Language === 'ar' ? 'ml-2 first:ml-0' : 'mr-2 last:mr-0'}`}>
+          <Button
+            variant="ghost"
+            className={`text-sm px-3 py-1 rounded-full transition-colors font-bold ${
+              activeCategory?.id === category.id
+                ? "bg-red-50 text-red-700"
+                : "hover:bg-gray-50 text-gray-700"
+            }`}
+            onClick={() => handleCategoryClick(category)}
+          >
+            <div className="flex items-center">
+              {/* Reverse icon position for Arabic */}
+              {Language === 'ar' && category.sub_categories?.length > 0 && (
+                <ChevronDown
+                  className={`mr-1 h-4 w-4 transition-transform duration-200 ${
+                    activeCategory?.id === category.id 
+                      ? "transform rotate-180 text-red-700" 
+                      : "text-gray-500"
+                  }`}
+                />
+              )}
+              <span>{category.name[Language]}</span>
+              {Language !== 'ar' && category.sub_categories?.length > 0 && (
+                <ChevronDown
+                  className={`ml-1 h-4 w-4 transition-transform duration-200 ${
+                    activeCategory?.id === category.id 
+                      ? "transform rotate-180 text-red-700" 
+                      : "text-gray-500"
+                  }`}
+                />
+              )}
+            </div>
+          </Button>
+        </div>
+      ))}
+    </div>
+
+    {/* Right scroll button (only visible when not at end) - conditionally rendered based on language */}
+    {Language === 'en' && mobileScrollRight > 0 && (
+      <button
+        onClick={() => scrollMobileCategories('right')}
+        className="p-1 rounded-full bg-white shadow-md text-gray-600 hover:bg-gray-100 ml-1 z-0"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    )}
+
+    {/* Left scroll button for RTL (Arabic) - shown on the right side */}
+    {Language === 'ar' && mobileScrollLeft > 0 && (
+      <button
+        onClick={() => scrollMobileCategories('left')}
+        className="p-1 rounded-full bg-white shadow-md text-gray-600 hover:bg-gray-100 ml-1 z-0"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+    )}
+  </div>
+</div>
+            
+            {/* Subcategories - Auto-expanding */}
+            {activeCategory && activeCategory.sub_categories?.length > 0 && (
+              <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                <div className="flex flex-wrap gap-1">
+                  {activeCategory.sub_categories.map((subcategory) => (
+                    <button
+                      key={subcategory.id}
+                      onClick={() => handleSubcategoryClick(subcategory)}
+                      className="text-sm px-3 py-1.5 rounded-full bg-white text-gray-700 hover:text-red-700 transition duration-150 ease-in-out hover:bg-red-50 border border-gray-200 font-semibold"
+                    >
+                      {subcategory.name[Language]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
     </div>
   );
 
@@ -273,12 +829,12 @@ export default function NavBanner() {
           }}
         >
           <div className="container mx-auto px-4 py-2">
-            <div className="flex flex-wrap gap-1"> {/* Changed from grid to flex with small gap */}
+            <div className="flex flex-wrap gap-1">
               {activeCategory.sub_categories.map((subcategory) => (
                 <button
                   key={subcategory.id}
                   onClick={() => handleSubcategoryClick(subcategory)}
-                  className="text-sm text-gray-700 hover:text-red-700 transition duration-150 ease-in-out py-1 px-3 rounded-md hover:bg-red-50 whitespace-nowrap" // Reduced padding
+                  className="text-sm text-gray-700 hover:text-red-700 transition duration-150 ease-in-out py-1 px-3 rounded-md hover:bg-red-50 whitespace-nowrap font-semibold"
                 >
                   {subcategory.name[Language]}
                 </button>
@@ -287,6 +843,223 @@ export default function NavBanner() {
           </div>
         </div>
       )}
+    </div>
+  );
+
+  const renderSearchAndLocation = () => (
+    <div className="hidden md:flex items-center justify-between bg-gray-50 px-4 py-2 border-b border-gray-200">
+      {/* Logo */}
+      <div className="flex items-center">
+  {/* Logo Section */}
+  <div className="flex-shrink-0 flex items-center gap-3 mr-4 ml-3">
+    {businessInfo?.business_logo_url ? (
+      <div className="flex items-center gap-3 mr-10">
+        <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-red-200 ">
+          <Image
+            src={businessInfo.business_logo_url}
+            alt={businessInfo.business_name?.[Language] || "4YOUAD"}
+            width={48}
+            height={48}
+            className="object-cover w-full h-full"
+          />
+        </div>
+        <span className="text-lg font-bold text-gray-800 hidden sm:block">
+          {businessInfo.business_name?.[Language] || "4YOUAD"}
+        </span>
+      </div>
+    ) : (
+      <div className="flex items-center gap-3">
+        <div className="h-12 w-12 rounded-full bg-red-600 text-white flex items-center justify-center text-xl font-bold">
+          4Y
+        </div>
+        <span className="text-lg font-bold text-gray-800 hidden sm:block">
+          {businessInfo?.business_name?.[Language] || "4YOUAD"}
+        </span>
+      </div>
+    )}
+  </div>
+
+  {/* Country and City Dropdowns */}
+  <div className="flex items-center gap-2 mr-10">
+    <div className="relative">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={toggleCountryDropdown}
+        className="text-sm font-semibold"
+      >
+        <span className="truncate max-w-[100px]">
+          {selectedCountry ? selectedCountry.name[Language] : currentContent.selectCountry}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 ml-1" />
+      </Button>
+      
+      {isCountryDropdownOpen && (
+        <div className="absolute z-10 mt-1 w-40 rounded-md bg-white shadow-lg border border-gray-200 max-h-60 overflow-auto">
+          {countries.map((country) => (
+            <button
+              key={country.id}
+              onClick={() => handleSelectCountry(country)}
+              className={`block w-full text-left px-3 py-2 text-sm ${
+                selectedCountry?.id === country.id 
+                  ? 'bg-red-50 text-red-700 font-semibold' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {country.name[Language]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div className="relative">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={toggleCityDropdown}
+        disabled={!selectedCountry}
+        className={`text-sm font-semibold w-[200px] ${
+          !selectedCountry ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
+      >
+        <span className="truncate max-w-[100px]">
+          {selectedCity ? selectedCity.name[Language] : currentContent.selectCity}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 ml-1" />
+      </Button>
+      
+      {isCityDropdownOpen && selectedCountry && (
+        <div className="absolute z-10 mt-1 w-40 rounded-md bg-white shadow-lg border border-gray-200 max-h-60 overflow-auto">
+          {selectedCountry.cities.map((city) => (
+            <button
+              key={city.id}
+              onClick={() => handleSelectCity(city)}
+              className={`block w-full text-left px-3 py-2 text-sm ${
+                selectedCity?.id === city.id 
+                  ? 'bg-red-50 text-red-700 font-semibold' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {city.name[Language]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+      {/* Search Bar */}
+      <div className="flex-1 max-w-8xl mr-4 relative" ref={searchRef}>
+        <form onSubmit={handleSearchSubmit}>
+          <div className="relative">
+            <Input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setShowSearchResults(e.target.value.trim().length > 0);
+              }}
+              onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
+              placeholder={currentContent.searchPlaceholder}
+              className="w-full pl-12 pr-20 py-2 text-sm rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm hover:border-black-400 transition-colors"
+            />
+            <button 
+              type="button"
+              onClick={handleSearchIconClick}
+              className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </button>
+            <Button 
+              type="submit"
+              variant="default" 
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-6 px-3 text-xs shadow-sm rounded-full"
+            >
+              {currentContent.search}
+            </Button>
+          </div>
+        </form>
+
+        {showSearchResults && searchResults.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-72 overflow-y-auto">
+            <div className="divide-y divide-gray-100">
+              {searchResults.some(r => r.type === 'category') && (
+                <div>
+                  <div className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 uppercase tracking-wider">
+                    {currentContent.allCategories}
+                  </div>
+                  <div className="grid grid-cols-1">
+                    {searchResults
+                      .filter(r => r.type === 'category')
+                      .map((result) => (
+                        <Link
+                          key={`cat-${result.id}`}
+                          href={`/products/${result.slug}`}
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
+                        >
+                          {result.image_url ? (
+                            <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
+                              <img 
+                                src={result.image_url} 
+                                alt={result.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded flex items-center justify-center">
+                              <Search className="h-2.5 w-2.5 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="truncate">{result.name}</span>
+                        </Link>
+                      ))}
+                  </div>
+                </div>
+              )}
+              
+
+              {searchResults.some(r => r.type === 'product') && (
+                <div>
+                  <div className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 uppercase tracking-wider">
+                    {currentContent.allProducts}
+                  </div>
+                  <div className="grid grid-cols-1">
+                    {searchResults
+                      .filter(r => r.type === 'product')
+                      .map((result) => (
+                        <Link
+                          key={`prod-${result.id}`}
+                          href={`/product/${result.slug}`}
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-red-50 transition-colors"
+                        >
+                          {result.image_url ? (
+                            <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
+                              <img 
+                                src={result.image_url} 
+                                alt={result.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 mr-2 flex-shrink-0 bg-gray-100 rounded flex items-center justify-center">
+                              <Search className="h-2.5 w-2.5 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="truncate">{result.name}</span>
+                        </Link>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Country and City Selectors */}
+     
     </div>
   );
 
@@ -309,6 +1082,7 @@ export default function NavBanner() {
       className="w-full bg-white border-b border-gray-200 shadow-sm relative z-40 navigation-container" 
       dir={Language === "ar" ? "rtl" : "ltr"}
     >
+      {renderSearchAndLocation()}
       <div className="container mx-auto max-w-7xl px-2 sm:px-4">
         {renderDesktopCategories()}
         {renderMobileCategories()}

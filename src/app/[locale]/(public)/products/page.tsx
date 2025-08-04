@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/Context/LanguageContext";
 import { useState, useEffect, useMemo } from "react";
-import { FiFilter, FiX, FiArrowUp, FiArrowDown, FiStar, FiHeart, FiChevronLeft, FiEye, FiShoppingCart, FiChevronRight } from "react-icons/fi";
+import { FiFilter, FiX, FiArrowUp, FiArrowDown, FiStar, FiHeart, FiChevronLeft, FiEye, FiShoppingCart, FiChevronRight, FiImage } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
@@ -477,13 +477,22 @@ Can you help me with the purchase?`;
           margin-right: 0;
           margin-left: 0.375rem;
         }
+
+        /* Image placeholder styles */
+        .image-placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #f3f4f6;
+          color: #9ca3af;
+        }
       `}</style>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="mb-8 flex  text-center flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
               {categorySlug 
                 ? (singleCategoryProducts?.[0]?.name[lang] || 
                   (Language === 'ar' ? 'المنتجات' : 'Products'))
@@ -504,8 +513,8 @@ Can you help me with the purchase?`;
             >
               {Language === 'ar' ? (
                 <>
-                  <span>العودة إلى المتجر</span>
                   <FiChevronLeft className="ml-1" />
+                  <span>العودة إلى المتجر</span>
                 </>
               ) : (
                 <>
@@ -826,11 +835,24 @@ Can you help me with the purchase?`;
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-gray-100 rounded-lg overflow-hidden h-full max-h-[500px] flex items-center">
-                  <img
-                    src={selectedProduct.picture_url}
-                    alt={selectedProduct.name[lang]}
-                    className="w-full h-auto object-contain max-h-[500px]"
-                  />
+                  {selectedProduct.picture_url ? (
+                    <img
+                      src={selectedProduct.picture_url}
+                      alt={selectedProduct.name[lang]}
+                      className="w-full h-auto object-contain max-h-[500px]"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = '';
+                        target.parentElement?.classList.add('image-placeholder');
+                      }}
+                    />
+                  ) : (
+                    <div className="image-placeholder w-full h-full flex flex-col items-center justify-center">
+                      <FiImage size={48} className="text-gray-400 mb-2" />
+                      <span className="text-gray-500">{Language === 'ar' ? 'لا توجد صورة' : 'No Image'}</span>
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -927,17 +949,29 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick, navigateToProduct }: ProductCardProps) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div className="group relative h-full flex flex-col transition-slow transform-hover">
       <div className="bg-white rounded-xl shadow-soft overflow-hidden border border-gray-100 hover:shadow-hover transition-slow h-full flex flex-col">
         {/* Product Image */}
         <div className="relative overflow-hidden pt-[100%] bg-gray-50">
-          <img
-            src={product.picture_url}
-            alt={product.name[language]}
-            className="absolute inset-0 w-full h-full object-cover transition-slow group-hover:scale-105"
-            loading="lazy"
-          />
+          {product.picture_url && !imageError ? (
+            <img
+              src={product.picture_url}
+              alt={product.name[language]}
+              className="absolute inset-0 w-full h-full object-contain transition-slow group-hover:scale-105"
+              loading="lazy"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+              <div className="flex flex-col items-center">
+                <FiImage size={48} className="mb-2" />
+                <span>{language === 'ar' ? 'لا توجد صورة' : 'No Image'}</span>
+              </div>
+            </div>
+          )}
           
           {/* Discount Badge */}
           {product.discount > 0 && (
@@ -1010,16 +1044,20 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick, n
                 </span>
               )}
             </div>
-          <Button
-  variant="outline"
-  size="sm"
-  className="mt-4 w-full  py-5 bg-red-100 text-red-500 shadow-md hover:bg-red-200 hover:text-red rounded-lg font-medium flex items-center justify-center gap-2 transition-slow"
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigateToProduct(product.slug);
-  }}
->
+          </div>
+
+          {/* Buttons */}
+          <div className="mt-4 space-y-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full py-5 bg-red-100 text-red-500 shadow-md hover:bg-red-200 hover:text-red rounded-lg font-medium flex items-center justify-center gap-2 transition-slow"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigateToProduct(product.slug);
+              }}
+            >
               {language === 'ar' ? 'التفاصيل' : 'Details'}
             </Button>
             
@@ -1031,7 +1069,7 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick, n
                 e.stopPropagation();
                 onWhatsAppClick?.();
               }}
-              className={`mt-4 w-full py-3.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-slow ${
+              className={`w-full py-3.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-slow ${
                 product.quantity > 0 
                   ? 'bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed'
@@ -1042,9 +1080,6 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick, n
               </svg>
               {language === 'ar' ? 'أطلب عبر واتساب' : 'Order via WhatsApp'}
             </Button>
-
-            {/* Details Button */}
-            
           </div>
         </div>
       </div>
