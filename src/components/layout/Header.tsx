@@ -91,31 +91,31 @@ export default function Header() {
       dir={Language === "ar" ? "rtl" : "ltr"}
     >
       {/* Top Contact Bar - Red */}
-      <div className="bg-red-100 text-red text-xs py-2 px-4">
+      <div className="bg-red-500 text-white text-xs py-2 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           {/* Modified Contact Info Section */}
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 w-full md:w-auto">
             {businessInfo?.business_phone && (
               <a 
                 href={`tel:${businessInfo.business_phone}`}
-                className="flex items-center gap-1 hover:text-red transition-colors redspace-nowrap"
+                className="flex items-center gap-1 hover:text-white transition-colors redspace-nowrap"
               >
-                <Phone className="h-3 w-3 text-red opacity-80 flex-shrink-0" />
+                <Phone className="h-3 w-3 text-white opacity-80 flex-shrink-0" />
                 <span>{businessInfo.business_phone}</span>
               </a>
             )}
             {businessInfo?.business_email && (
               <a 
                 href={`mailto:${businessInfo.business_email}`}
-                className="flex items-center gap-1 hover:text-red transition-colors redspace-nowrap"
+                className="flex items-center gap-1 hover:text-white transition-colors redspace-nowrap"
               >
-                <Mail className="h-3 w-3 text-red opacity-80 flex-shrink-0" />
+                <Mail className="h-3 w-3 text-white  opacity-80 flex-shrink-0" />
                 <span>{businessInfo.business_email}</span>
               </a>
             )}
             {businessInfo?.business_address && (
               <div className="flex items-center gap-1 redspace-nowrap">
-                <MapPin className="h-3 w-3 text-red opacity-80 flex-shrink-0" />
+                <MapPin className="h-3 w-3 text-white  opacity-80 flex-shrink-0" />
                 <span className="md:truncate max-w-[120px] md:max-w-[160px]">
                   {businessInfo.business_address[Language]}
                 </span>
@@ -131,7 +131,7 @@ export default function Header() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-red hover:opacity-80 transition-opacity"
+                  className="text-white hover:opacity-80 transition-opacity"
                   aria-label={link.platform}
                 >
                   {link.platform === 'facebook' ? (
@@ -152,7 +152,7 @@ export default function Header() {
                 variant="ghost"
                 size="sm"
                 onClick={toggleLanguageDropdown}
-                className="text-red hover:bg-red-200 hover:text-red flex items-center gap-1 px-1 h-6"
+                className="text-white  h flex items-center gap-1 px-1 h-6"
               >
                 <Globe className="h-3 w-3" />
                 <span className="text-xs">{Language === "ar" ? "العربية" : "English"}</span>
@@ -166,7 +166,7 @@ export default function Header() {
       onClick={() => changeLanguage("en")}
       className={`block w-full text-left px-3 py-2 text-sm ${
         Language === 'en' 
-          ? 'bg-red-100 text-red-700 font-medium' 
+          ? 'bg-red-100 text-white-700 font-medium' 
           : 'text-gray-700 hover:bg-gray-50'
       } transition-colors duration-150`}
     >
@@ -176,7 +176,7 @@ export default function Header() {
       onClick={() => changeLanguage("ar")}
       className={`block w-full text-left px-3 py-2 text-sm ${
         Language === 'ar' 
-          ? 'bg-red-100 text-red-700 font-medium' 
+          ? 'bg-red-500 text-white-700 font-medium' 
           : 'text-gray-700 hover:bg-gray-50'
       } transition-colors duration-150`}
     >

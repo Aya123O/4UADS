@@ -29,9 +29,29 @@ interface Product {
     ar: string;
     en: string;
   };
-  price: number;
-  discount: number;
-  final_price: number;
+  prices: {
+    id: number;
+    price: number;
+    discount: number;
+    final_price: number;
+    product_id: number;
+    specification_id: number | null;
+    specification_detail_id: number | null;
+    specification: {
+      id: number;
+      name: {
+        ar: string;
+        en: string;
+      };
+    } | null;
+    specification_detail: {
+      id: number;
+      name: {
+        ar: string;
+        en: string;
+      };
+    } | null;
+  }[];
   quantity: number;
   phone_number: string;
   whatsapp_number: string;
@@ -110,11 +130,6 @@ interface Product {
   }[];
   created_at?: string;
   views?: number;
-  options?: {
-    id: number;
-    name: string;
-    product_id: number;
-  }[];
 }
 
 interface SimilarProduct {
@@ -123,15 +138,21 @@ interface SimilarProduct {
     ar: string;
     en: string;
   };
-  price: number;
-  final_price: number;
+  prices: {
+    final_price: number;
+    price: number;
+  }[];
   picture_url: string;
   slug: string;
   quantity: number;
 }
 
 interface SelectedSpecs {
-  [key: string]: string;
+  [key: string]: {
+    specId: number;
+    detailId: number;
+    value: string;
+  };
 }
 
 export default function ProductDetails() {
@@ -143,7 +164,7 @@ export default function ProductDetails() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [similarProducts, setSimilarProducts] = useState<SimilarProduct[]>([]);
   const [similarLoading, setSimilarLoading] = useState(true);
-  const [quantity, setQuantity] = useState(1);
+  const [quantities, setQuantities] = useState<{[key: number]: number}>({});
   const [selectedSpecs, setSelectedSpecs] = useState<SelectedSpecs>({});
   const { Language } = useLanguage();
   const { slug } = useParams();
@@ -160,14 +181,27 @@ export default function ProductDetails() {
           const result = await response.json();
           if (result.data) {
             setProduct(result.data);
+            
+            // Initialize quantities for each price
+            const initialQuantities: {[key: number]: number} = {};
+            result.data.prices.forEach((price: any) => {
+              initialQuantities[price.id] = 1;
+            });
+            setQuantities(initialQuantities);
+            
             // Initialize selected specs with first option for each specification
             const initialSpecs: SelectedSpecs = {};
             result.data.product_specifications.forEach((spec: any) => {
               if (spec.details.length > 0) {
-                initialSpecs[spec.name[Language]] = spec.details[0].name[Language];
+                initialSpecs[spec.id] = {
+                  specId: spec.id,
+                  detailId: spec.details[0].id,
+                  value: spec.details[0].name[Language]
+                };
               }
             });
             setSelectedSpecs(initialSpecs);
+            
             fetchSimilarProducts(result.data.main_category_id, result.data.sub_category_id);
           } else {
             setError("Product not found");
@@ -206,24 +240,43 @@ export default function ProductDetails() {
     setShowPhoneNumber(true);
   };
 
-  const handleSpecChange = (specName: string, value: string) => {
-    setSelectedSpecs(prev => ({
-      ...prev,
-      [specName]: value
-    }));
+  const handleSpecChange = (specId: number, detailId: number, value: string) => {
+    if (!product) return;
+
+    const newSpecs = {
+      ...selectedSpecs,
+      [specId]: {
+        specId,
+        detailId,
+        value
+      }
+    };
+    setSelectedSpecs(newSpecs);
   };
 
-  const handleWhatsAppClick = () => {
+  const handleWhatsAppClick = (priceId: number) => {
     if (typeof window === "undefined" || !product) return;
+
+    // Safely get price
+    const price = product.prices.find(p => p.id === priceId);
+    if (!price) {
+      console.error("Price not found for id:", priceId);
+      return;
+    }
 
     const currentUrl = window.location.href;
     const propertyName = product.name[Language];
-    const totalPrice = (quantity * product.final_price).toLocaleString();
-    const unitPrice = product.final_price.toLocaleString();
+    const quantity = quantities[priceId] || 1;
+    const totalPrice = (quantity * price.final_price).toLocaleString();
+    const unitPrice = price.final_price.toLocaleString();
     
     // Format selected specifications for the message
-    const specsText = Object.entries(selectedSpecs)
-      .map(([key, value]) => `- ${key}: ${value}`)
+    const specsText = Object.values(selectedSpecs)
+      .map(spec => {
+        const specName = product.product_specifications
+          .find(s => s.id === spec.specId)?.name[Language] || '';
+        return `- ${specName}: ${spec.value}`;
+      })
       .join('\n');
     
     const message =
@@ -254,6 +307,11 @@ ${specsText}
 Can you confirm the order?`;
 
     let phoneNumber = product.whatsapp_number || product.phone_number;
+    if (!phoneNumber) {
+      console.error("No phone number available");
+      return;
+    }
+    
     if (!phoneNumber.startsWith("+")) {
       phoneNumber = `+20${phoneNumber}`;
     }
@@ -262,6 +320,27 @@ Can you confirm the order?`;
       message
     )}`;
     window.open(whatsappUrl, "_blank");
+  };
+
+  const increaseQuantity = (priceId: number) => {
+    if (!product) return;
+    const currentQty = quantities[priceId] ?? 1;
+    if (currentQty < product.quantity) {
+      setQuantities({
+        ...quantities,
+        [priceId]: currentQty + 1
+      });
+    }
+  };
+
+  const decreaseQuantity = (priceId: number) => {
+    const currentQty = quantities[priceId] ?? 1;
+    if (currentQty > 1) {
+      setQuantities({
+        ...quantities,
+        [priceId]: currentQty - 1
+      });
+    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -285,18 +364,6 @@ Can you confirm the order?`;
         ))}
       </div>
     );
-  };
-
-  const increaseQuantity = () => {
-    if (product && quantity < product.quantity) {
-      setQuantity(quantity + 1);
-    }
-  };
-
-  const decreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
   };
 
   // Parse JSON strings from API
@@ -391,7 +458,7 @@ Can you confirm the order?`;
       className="container mx-auto px-4 sm:px-6 lg:px-8 py-12"
       dir={Language === "ar" ? "rtl" : "ltr"}
     >
-      {/* Breadcrumb with gradient background */}
+      {/* Breadcrumb */}
       <nav className="flex items-center mb-8">
         <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
           <li className="inline-flex items-center">
@@ -418,7 +485,7 @@ Can you confirm the order?`;
               <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
               <a 
                 href={`/products?sub_category_id=${product.sub_category.slug}`} 
-                className="text-sm font-medium text-gray-500 hover:text-red transition-colors"
+                className="text-sm font-medium text-red hover:text-red transition-colors"
               >
                 {product.sub_category.name[Language]}
               </a>
@@ -436,7 +503,7 @@ Can you confirm the order?`;
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Enhanced Image Gallery */}
+        {/* Image Gallery */}
         <div className="space-y-6">
           <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl overflow-hidden shadow-lg">
             <Image
@@ -451,9 +518,9 @@ Can you confirm the order?`;
             
             {/* Floating badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2">
-              {product.discount > 0 && (
+              {product.prices.some(p => p.discount > 0) && (
                 <div className="bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                  {product.discount}% {Language === "ar" ? "خصم" : "OFF"}
+                  {Math.max(...product.prices.map(p => p.discount))}% {Language === "ar" ? "خصم" : "OFF"}
                 </div>
               )}
               <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm">
@@ -477,7 +544,7 @@ Can you confirm the order?`;
             </button>
           </div>
           
-          {/* Thumbnails with hover effect */}
+          {/* Thumbnails */}
           <div className="grid grid-cols-4 gap-3">
             {[0, 1, 2, 3].map((i) => (
               <button
@@ -505,7 +572,7 @@ Can you confirm the order?`;
           </div>
         </div>
 
-        {/* Product Info with enhanced styling */}
+        {/* Product Info */}
         <div className="space-y-8">
           <div className="flex justify-between items-start gap-4">
             <div>
@@ -516,7 +583,6 @@ Can you confirm the order?`;
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-1">
                   {renderStars()}
-                 
                 </div>
                 
                 <span className="text-sm text-gray-500 flex items-center">
@@ -524,35 +590,6 @@ Can you confirm the order?`;
                   {formatDate(product.created_at)}
                 </span>
               </div>
-            </div>
-          </div>
-
-          {/* Price section with creative discount display */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-2xl">
-            <div className="flex items-end gap-4">
-              <span className="text-3xl font-bold text-gray-900">
-                {product.final_price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
-              </span>
-              
-              {product.discount > 0 && (
-                <div className="flex flex-col">
-                  <span className="text-lg line-through text-gray-500">
-                    {product.price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
-                  </span>
-                  <span className="bg-gradient-to-r from-red-100 to-pink-100 text-red-600 text-sm font-medium px-2 py-0.5 rounded-full inline-block">
-                    {Language === "ar" ? "وفر" : "Save"} {(product.price - product.final_price).toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"} ({product.discount}%)
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* Stock indicator */}
-            <div className="mt-3">
-              <div className="flex justify-between text-sm text-gray-500 mb-1">
-                <span>{Language === "ar" ? "المتاح" : "Available"}: {product.quantity}</span>
-                <span>{Language === "ar" ? "تم بيع" : "Sold"}: {Math.floor(product.quantity * 0.7)}</span>
-              </div>
-              <Progress value={70} className="h-2 bg-gray-200" />
             </div>
           </div>
 
@@ -569,36 +606,43 @@ Can you confirm the order?`;
                       {spec.name[Language]}
                     </h5>
                     <RadioGroup 
-                      value={selectedSpecs[spec.name[Language]] || ''}
-                      onValueChange={(value) => handleSpecChange(spec.name[Language], value)}
+                      value={selectedSpecs[spec.id]?.detailId.toString() || ''}
+                      onValueChange={(value) => {
+                        const detail = spec.details.find(d => d.id.toString() === value);
+                        if (detail) {
+                          handleSpecChange(spec.id, detail.id, detail.name[Language]);
+                        }
+                      }}
                       className="grid grid-cols-3 gap-3"
                     >
                       {spec.details.map((detail) => (
-                        <div key={detail.id} className="flex items-center space-x-2">
-                          <RadioGroupItem 
-                            value={detail.name[Language]} 
-                            id={`${spec.id}-${detail.id}`}
-                            className="peer hidden"
-                          />
+                        <div key={detail.id}>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem 
+                              value={detail.id.toString()} 
+                              id={`${spec.id}-${detail.id}`}
+                              className="peer hidden"
+                            />
                             <Label
-  htmlFor={`${spec.id}-${detail.id}`}
-  className={`
-    flex flex-1 items-center justify-center 
-    rounded-lg border-2 p-3 text-sm font-medium 
-    cursor-pointer transition-all duration-200
-    border-gray-200 hover:border-red-400
-    bg-white hover:bg-red-50
-    text-gray-700 hover:text-red-700
-    peer-data-[state=checked]:border-red-500
-    peer-data-[state=checked]:bg-red-50
-    peer-data-[state=checked]:text-red-700
-    peer-data-[state=checked]:shadow-sm
-    peer-data-[state=checked]:shadow-red-100
-    active:scale-[0.98]
-  `}
->
-                            {detail.name[Language]}
-                          </Label>
+                              htmlFor={`${spec.id}-${detail.id}`}
+                              className={`
+                                flex flex-1 items-center justify-center 
+                                rounded-lg border-2 p-3 text-sm font-medium 
+                                cursor-pointer transition-all duration-200
+                                border-gray-200 hover:border-red-400
+                                bg-white hover:bg-red-50
+                                text-gray-700 hover:text-red-700
+                                peer-data-[state=checked]:border-red-500
+                                peer-data-[state=checked]:bg-red-50
+                                peer-data-[state=checked]:text-red-700
+                                peer-data-[state=checked]:shadow-sm
+                                peer-data-[state=checked]:shadow-red-100
+                                active:scale-[0.98]
+                              `}
+                            >
+                              {detail.name[Language]}
+                            </Label>
+                          </div>
                         </div>
                       ))}
                     </RadioGroup>
@@ -608,39 +652,85 @@ Can you confirm the order?`;
             </div>
           )}
 
-          {/* Quantity Selector */}
-          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-            <h4 className="font-medium text-gray-900 mb-3">
-              {Language === "ar" ? "الكمية" : "Quantity"}
+          {/* Price variants displayed as coupon-like list */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-gray-900">
+              {Language === "ar" ? "خيارات الشراء" : "Purchase Options"}
             </h4>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={decreaseQuantity}
-                  disabled={quantity <= 1}
-                  className="h-12 w-12 rounded-none border-r border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <div className="h-12 w-16 flex items-center justify-center text-lg font-medium">
-                  {quantity}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={increaseQuantity}
-                  disabled={product.quantity <= quantity}
-                  className="h-12 w-12 rounded-none border-l border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="text-gray-900 font-medium">
-                {Language === "ar" ? "المجموع" : "Total"}: {(quantity * product.final_price).toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
-              </div>
-            </div>
+            
+            <ul className="space-y-4">
+              {product.prices.map((price) => {
+                // Get specification name and detail for this price
+                const specName = price.specification?.name[Language] || '';
+                const specDetail = price.specification_detail?.name[Language] || '';
+                
+                return (
+                  <li key={price.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">
+                          {specName && specDetail ? `${specName}: ${specDetail}` : Language === "ar" ? "الخيار الأساسي" : "Base Option"}
+                        </h4>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-lg font-bold text-primary">
+                            {price.final_price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
+                          </span>
+                          {price.discount > 0 && (
+                            <>
+                              <span className="text-sm text-gray-500 line-through">
+                                {price.price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
+                              </span>
+                              <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                                {price.discount}% {Language === "ar" ? "خصم" : "OFF"}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between gap-4">
+                          <h5 className="text-sm text-gray-600">
+                            {Language === "ar" ? "الكمية" : "Quantity"}
+                          </h5>
+                          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => decreaseQuantity(price.id)}
+                              disabled={(quantities[price.id] ?? 1) <= 1}
+                              className="h-10 w-10 rounded-none border-r border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                            <div className="h-10 w-12 flex items-center justify-center text-base font-medium">
+                              {quantities[price.id] || 1}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => increaseQuantity(price.id)}
+                              disabled={product.quantity <= (quantities[price.id] ?? 1)}
+                              className="h-10 w-10 rounded-none border-l border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <Button
+                          onClick={() => handleWhatsAppClick(price.id)}
+                          className="h-10 bg-green-100 text-green-700 hover:bg-green-200 shadow-sm transition-all"
+                        >
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          {Language === "ar" ? "اطلب عبر واتساب" : "Order via WhatsApp"}
+                        </Button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           {/* Key product details */}
@@ -749,30 +839,10 @@ Can you confirm the order?`;
             </div>
           )}
 
-          {/* Options */}
-          {product.options && product.options.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="font-medium text-gray-900">
-                {Language === "ar" ? "الخيارات" : "Options"}
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {product.options.map((option) => (
-                  <Badge 
-                    key={option.id} 
-                    variant="outline" 
-                    className="px-3 py-1 text-sm bg-purple-50 border-purple-100 text-purple-600"
-                  >
-                    {option.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Contact Buttons with enhanced styling */}
+          {/* Contact Buttons */}
           <div className="space-y-4 sticky bottom-4 bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-gray-100">
             <div className="flex flex-col sm:flex-row gap-3">
-               <Button
+              <Button
                 onClick={handleShowPhoneNumber}
                 className="flex-1 h-14 bg-red-100 text-red-500 shadow-md hover:bg-red-200 transition-all"
               >
@@ -784,89 +854,95 @@ Can you confirm the order?`;
                   : "Show Phone Number"}
               </Button>
 
-              
-             <Button
-                onClick={handleWhatsAppClick}
-                className="flex-1 h-14 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
-              >
-                <MessageCircle className={`${Language === "ar" ? "ml-3" : "mr-3"} text-green-700`} size={20} />
-                {Language === "ar" ? "إرسال الطلب عبر واتساب" : "Order via WhatsApp"}
-              </Button>
-
+              {product.prices.length > 0 && (
+                <Button
+                  onClick={() => {
+                    const firstPriceId = product.prices[0]?.id;
+                    if (typeof firstPriceId === "number") {
+                      handleWhatsAppClick(firstPriceId);
+                    }
+                  }}
+                  className="flex-1 h-14 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
+                >
+                  <MessageCircle className={`${Language === "ar" ? "ml-3" : "mr-3"} text-green-700`} size={20} />
+                  {Language === "ar" ? "إرسال الطلب عبر واتساب" : "Order via WhatsApp"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
+      {/* Product Details Tabs */}
       <div className="mt-16">
-         <Tabs defaultValue="details" className="w-full">
-  <TabsList className="w-full justify-start bg-transparent p-0 border-b border-gray-200 rounded-none">
-    <TabsTrigger 
-      value="details" 
-      className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
-    >
-      {Language === "ar" ? "تفاصيل المنتج" : "Product Details"}
-    </TabsTrigger>
-  </TabsList>
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="w-full justify-start bg-transparent p-0 border-b border-gray-200 rounded-none">
+            <TabsTrigger 
+              value="details" 
+              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              {Language === "ar" ? "تفاصيل المنتج" : "Product Details"}
+            </TabsTrigger>
+          </TabsList>
 
-  <TabsContent value="details" className="mt-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="border-gray-100 shadow-sm">
-        <CardContent className="p-6 space-y-4">
-          <h4 className="font-semibold text-lg">
-            {Language === "ar" ? "معلومات المنتج" : "Product Info"}
-          </h4>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-500">{Language === "ar" ? "الفئة الرئيسية" : "Main Category"}</span>
-              <span className="font-medium">{product.main_category?.name?.[Language] || "N/A"}</span>
+          <TabsContent value="details" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="border-gray-100 shadow-sm">
+                <CardContent className="p-6 space-y-4">
+                  <h4 className="font-semibold text-lg">
+                    {Language === "ar" ? "معلومات المنتج" : "Product Info"}
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">{Language === "ar" ? "الفئة الرئيسية" : "Main Category"}</span>
+                      <span className="font-medium">{product.main_category?.name?.[Language] || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">{Language === "ar" ? "الفئة الفرعية" : "Sub Category"}</span>
+                      <span className="font-medium">{product.sub_category?.name?.[Language] || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">{Language === "ar" ? "البلد" : "Country"}</span>
+                      <span className="font-medium">{product.country?.name?.[Language] || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">{Language === "ar" ? "المدينة" : "City"}</span>
+                      <span className="font-medium">{product.city?.name?.[Language] || "N/A"}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-gray-100 shadow-sm">
+                <CardContent className="p-6 space-y-4">
+                  <h4 className="font-semibold text-lg">
+                    {Language === "ar" ? "المعرفات" : "Identifiers"}
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">SKU</span>
+                      <span className="font-medium">{product.sku || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">{Language === "ar" ? "الباركود" : "Barcode"}</span>
+                      <span className="font-medium">{product.barcode || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">{Language === "ar" ? "الرابط" : "Slug"}</span>
+                      <span className="font-medium">{product.slug || "N/A"}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{Language === "ar" ? "الفئة الفرعية" : "Sub Category"}</span>
-              <span className="font-medium">{product.sub_category?.name?.[Language] || "N/A"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{Language === "ar" ? "البلد" : "Country"}</span>
-              <span className="font-medium">{product.country?.name?.[Language] || "N/A"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{Language === "ar" ? "المدينة" : "City"}</span>
-              <span className="font-medium">{product.city?.name?.[Language] || "N/A"}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="border-gray-100 shadow-sm">
-        <CardContent className="p-6 space-y-4">
-          <h4 className="font-semibold text-lg">
-            {Language === "ar" ? "المعرفات" : "Identifiers"}
-          </h4>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-500">SKU</span>
-              <span className="font-medium">{product.sku || "N/A"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{Language === "ar" ? "الباركود" : "Barcode"}</span>
-              <span className="font-medium">{product.barcode || "N/A"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{Language === "ar" ? "الرابط" : "Slug"}</span>
-              <span className="font-medium">{product.slug || "N/A"}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  </TabsContent>
-</Tabs>
+          </TabsContent>
+        </Tabs>
       </div>
 
-      {/* Seller Information with enhanced card */}
+      {/* Seller Information */}
       <div className="mt-16">
         <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center">
-<span className="w-4 h-8 bg-gradient-to-r from-black  to-white rounded-full mr-3"></span>
+          <span className="w-4 h-8 bg-gradient-to-r from-black to-white rounded-full mr-3"></span>
           {Language === "ar" ? "معلومات البائع" : "Seller Information"}
         </h3>
         
@@ -883,8 +959,6 @@ Can you confirm the order?`;
                     quality={100}
                   />
                 </div>
-                
-               
               </div>
               
               <div className="flex-1 p-6">
@@ -910,24 +984,26 @@ Can you confirm the order?`;
                       )}
                     </div>
                   </div>
-                  
-                 
                 </div>
                 
                 <Separator className="my-6" />
                 
                 <div className="flex flex-wrap gap-3">
-              
-                 
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
-                    onClick={handleWhatsAppClick}
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    WhatsApp
-                  </Button>
-               
+                  {product.prices.length > 0 && (
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
+                      onClick={() => {
+                        const firstPriceId = product.prices[0]?.id;
+                        if (typeof firstPriceId === "number") {
+                          handleWhatsAppClick(firstPriceId);
+                        }
+                      }}
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      WhatsApp
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -935,7 +1011,7 @@ Can you confirm the order?`;
         </Card>
       </div>
 
-      {/* Similar Products with enhanced carousel */}
+      {/* Similar Products */}
       <div className="mt-20">
         <div className="flex justify-between items-center mb-8">
           <h3 className="text-2xl font-bold text-gray-900 flex items-center">
@@ -1024,11 +1100,11 @@ Can you confirm the order?`;
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-lg font-bold text-primary">
-                            {item.final_price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
+                            {item.prices[0]?.final_price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
                           </p>
-                          {item.price > item.final_price && (
+                          {item.prices[0] && item.prices[0].price > item.prices[0].final_price && (
                             <p className="text-sm text-gray-500 line-through">
-                              {item.price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
+                              {item.prices[0].price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
                             </p>
                           )}
                         </div>

@@ -558,7 +558,7 @@ export default function NavBanner() {
              <button 
                 type="button"
                 onClick={handleMobileSearchIconClick}
-                className={`absolute ${Language === 'ar' ? 'left-1' : 'right-3'} top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm`}
+                className={`absolute ${Language === 'ar' ? 'left-3' : 'right-3'} top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm`}
               >
                 <Search className="h-3.5 w-3.5" />
               </button>
@@ -971,14 +971,14 @@ export default function NavBanner() {
             <button 
               type="button"
               onClick={handleSearchIconClick}
-              className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm"
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm"
             >
               <Search className="h-3.5 w-3.5" />
             </button>
             <Button 
               type="submit"
               variant="default" 
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-6 px-3 text-xs shadow-sm rounded-full"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-6 px-3 text-xs shadow-sm rounded-full"
             >
               {currentContent.search}
             </Button>

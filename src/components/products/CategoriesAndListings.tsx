@@ -150,7 +150,7 @@ export default function CategoriesAndListings({
           <h3 className="font-bold text-gray-900 line-clamp-2 text-lg flex-grow">
             {product.name[Language]}
           </h3>
-          <div className="flex flex-col items-start sm:items-end">
+          {/* <div className="flex flex-col items-start sm:items-end">
             <span className="font-bold text-xl text-gray-900">
               {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
             </span>
@@ -159,7 +159,7 @@ export default function CategoriesAndListings({
                 {product.price} {Language === "ar" ? "ج.م" : "EGP"}
               </span>
             )}
-          </div>
+          </div> */}
         </div>
 
         {product.rating && (
