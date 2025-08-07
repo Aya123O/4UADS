@@ -11,6 +11,7 @@ import Layout from "@/components/Layout";
 import type { Viewport } from "next";
 
 import { LandingPageProvider } from "@/Context/LandingPageContext";
+import { ToastProvider } from "@/components/ui/use-toast";
 
 export const viewport: Viewport = {
   themeColor: "black",
@@ -36,11 +37,13 @@ export default function RootLayout(props: {
  
 
   return (
-    <html lang={props.params.locale} dir="ltr">
+      <html lang={props.params.locale} dir="ltr">
       <body className="relative">
-        <LandingPageProvider>
-          <Layout>{props.children}</Layout>
-        </LandingPageProvider>
+        <ToastProvider> {/* Add ToastProvider here */}
+          <LandingPageProvider>
+            <Layout>{props.children}</Layout>
+          </LandingPageProvider>
+        </ToastProvider>
       </body>
     </html>
   );

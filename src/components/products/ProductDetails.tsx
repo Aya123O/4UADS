@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapPin, Phone, MessageCircle, Star, ChevronLeft, ChevronRight, Share2, Heart, Link, Clock, Eye, Plus, Minus } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Star, ChevronLeft, ChevronRight, Share2, Heart, Link, Clock, Eye, Plus, Minus, ShoppingCart } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Product {
   id: number;
@@ -155,7 +156,25 @@ interface SelectedSpecs {
   };
 }
 
+interface CartItem {
+  id: number;
+  productId: number;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  slug: string;
+  specName: string;
+  specDetail: string;
+  color?: string;
+}
+
+interface ApiResponse {
+  data: Product;
+}
+
 export default function ProductDetails() {
+  const toast  = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,9 +185,18 @@ export default function ProductDetails() {
   const [similarLoading, setSimilarLoading] = useState(true);
   const [quantities, setQuantities] = useState<{[key: number]: number}>({});
   const [selectedSpecs, setSelectedSpecs] = useState<SelectedSpecs>({});
+  const [selectedColors, setSelectedColors] = useState<{[key: number]: string}>({});
   const { Language } = useLanguage();
   const { slug } = useParams();
   const router = useRouter();
+
+  const couponColors = [
+    "bg-white border-gray-200",
+    "bg-white border-gray-200",
+    "bg-white border-gray-200",
+    "bg-white border-gray-200",
+    "bg-white border-gray-200",
+  ];
 
   useEffect(() => {
     if (slug && typeof slug === "string") {
@@ -178,29 +206,37 @@ export default function ProductDetails() {
           const response = await fetch(
             `https://new.4youad.com/api/products/${slug}`
           );
-          const result = await response.json();
+          const result: ApiResponse = await response.json();
           if (result.data) {
             setProduct(result.data);
             
             // Initialize quantities for each price
             const initialQuantities: {[key: number]: number} = {};
-            result.data.prices.forEach((price: any) => {
+            result.data.prices.forEach((price) => {
               initialQuantities[price.id] = 1;
             });
             setQuantities(initialQuantities);
             
             // Initialize selected specs with first option for each specification
             const initialSpecs: SelectedSpecs = {};
-            result.data.product_specifications.forEach((spec: any) => {
-              if (spec.details.length > 0) {
+            result.data.product_specifications.forEach((spec) => {
+              if (spec.details && spec.details.length > 0) {
+                // Fixed: Added non-null assertion
+                const firstDetail = spec.details[0]!;
                 initialSpecs[spec.id] = {
                   specId: spec.id,
-                  detailId: spec.details[0].id,
-                  value: spec.details[0].name[Language]
+                  detailId: firstDetail.id,
+                  value: firstDetail.name[Language]
                 };
               }
             });
             setSelectedSpecs(initialSpecs);
+            
+            const initialColors: {[key: number]: string} = {};
+            result.data.prices.forEach((price, index: number) => {
+              initialColors[price.id] = couponColors[index % couponColors.length]!;
+            });
+            setSelectedColors(initialColors);
             
             fetchSimilarProducts(result.data.main_category_id, result.data.sub_category_id);
           } else {
@@ -254,72 +290,50 @@ export default function ProductDetails() {
     setSelectedSpecs(newSpecs);
   };
 
-  const handleWhatsAppClick = (priceId: number) => {
-    if (typeof window === "undefined" || !product) return;
+  const addToCart = (price: any) => {
+    if (!product) return;
 
-    // Safely get price
-    const price = product.prices.find(p => p.id === priceId);
-    if (!price) {
-      console.error("Price not found for id:", priceId);
-      return;
+    const cartItem: CartItem = {
+      id: Date.now(),
+      productId: product.id,
+      name: product.name[Language],
+      price: price.final_price,
+      quantity: quantities[price.id] || 1,
+      image: product.picture_url,
+      slug: product.slug,
+      specName: price.specification?.name[Language] || '',
+      specDetail: price.specification_detail?.name[Language] || '',
+      color: selectedColors[price.id]
+    };
+
+    // Get existing cart from localStorage
+    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    // Check if this exact item already exists in cart
+    const existingItemIndex = existingCart.findIndex((item: CartItem) => 
+      item.productId === cartItem.productId && 
+      item.specName === cartItem.specName &&
+      item.specDetail === cartItem.specDetail
+    );
+
+    if (existingItemIndex !== -1) {
+      // Update quantity of existing item
+      existingCart[existingItemIndex].quantity += cartItem.quantity;
+    } else {
+      // Add new item
+      existingCart.push(cartItem);
     }
 
-    const currentUrl = window.location.href;
-    const propertyName = product.name[Language];
-    const quantity = quantities[priceId] || 1;
-    const totalPrice = (quantity * price.final_price).toLocaleString();
-    const unitPrice = price.final_price.toLocaleString();
-    
-    // Format selected specifications for the message
-    const specsText = Object.values(selectedSpecs)
-      .map(spec => {
-        const specName = product.product_specifications
-          .find(s => s.id === spec.specId)?.name[Language] || '';
-        return `- ${specName}: ${spec.value}`;
-      })
-      .join('\n');
-    
-    const message =
-      Language === "ar"
-        ? `مرحبًا، أنا مهتم بشراء المنتج التالي:
-        
-*${propertyName}*
+    localStorage.setItem('cart', JSON.stringify(existingCart));
 
-${specsText}
+    toast({
+      title: Language === "ar" ? "تمت الإضافة إلى السلة" : "Added to Cart",
+      description: Language === "ar" 
+        ? `${cartItem.name} تمت إضافة إلى سلة التسوق` 
+        : `${cartItem.name} added to cart`,
+    });
 
-- الكمية: ${quantity}
-- السعر للوحدة: ${unitPrice} ج.م
-- السعر الإجمالي: ${totalPrice} ج.م
-- الرابط: ${currentUrl}
-
-هل يمكنك تأكيد الطلب؟`
-        : `Hello, I'm interested in purchasing the following product:
-
-*${propertyName}*
-
-${specsText}
-
-- Quantity: ${quantity}
-- Unit Price: ${unitPrice} EGP
-- Total Price: ${totalPrice} EGP
-- Link: ${currentUrl}
-
-Can you confirm the order?`;
-
-    let phoneNumber = product.whatsapp_number || product.phone_number;
-    if (!phoneNumber) {
-      console.error("No phone number available");
-      return;
-    }
-    
-    if (!phoneNumber.startsWith("+")) {
-      phoneNumber = `+20${phoneNumber}`;
-    }
-
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      message
-    )}`;
-    window.open(whatsappUrl, "_blank");
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   const increaseQuantity = (priceId: number) => {
@@ -437,13 +451,13 @@ Can you confirm the order?`;
   if (!product) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-red-600 px-8 py-6 rounded-2xl inline-block max-w-md shadow-sm">
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 text-blue-600 px-8 py-6 rounded-2xl inline-block max-w-md shadow-sm">
           <p className="font-medium text-lg">
             {Language === "ar" ? "المنتج غير موجود" : "Product not found"}
           </p>
           <Button 
             variant="ghost" 
-            className="mt-4 text-red-600 hover:bg-blue-100"
+            className="mt-4 text-blue-600 hover:bg-blue-100"
             onClick={() => router.push("/ads")}
           >
             {Language === "ar" ? "تصفح المنتجات الأخرى" : "Browse other products"}
@@ -485,7 +499,7 @@ Can you confirm the order?`;
               <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
               <a 
                 href={`/products?sub_category_id=${product.sub_category.slug}`} 
-                className="text-sm font-medium text-red hover:text-red transition-colors"
+                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 {product.sub_category.name[Language]}
               </a>
@@ -544,32 +558,7 @@ Can you confirm the order?`;
             </button>
           </div>
           
-          {/* Thumbnails */}
-          <div className="grid grid-cols-4 gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <button
-                key={i}
-                onClick={() => setActiveImage(i)}
-                className={`aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${activeImage === i ? 'border-primary shadow-md' : 'border-transparent hover:border-gray-200'}`}
-              >
-                <div className="relative w-full h-full">
-                  {i === 0 ? (
-                    <Image
-                      src={product.picture_url}
-                      alt={product.name[Language]}
-                      fill
-                      className="object-cover"
-                      quality={100}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                      <span className="text-gray-400 text-sm">+{i}</span>
-                    </div>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
+        
         </div>
 
         {/* Product Info */}
@@ -626,19 +615,20 @@ Can you confirm the order?`;
                             <Label
                               htmlFor={`${spec.id}-${detail.id}`}
                               className={`
-                                flex flex-1 items-center justify-center 
-                                rounded-lg border-2 p-3 text-sm font-medium 
+                                flex flex-1 items-center justify-center
+                                rounded-lg border-2 p-3 text-sm font-medium
                                 cursor-pointer transition-all duration-200
-                                border-gray-200 hover:border-red-400
-                                bg-white hover:bg-red-50
-                                text-gray-700 hover:text-red-700
-                                peer-data-[state=checked]:border-red-500
-                                peer-data-[state=checked]:bg-red-50
-                                peer-data-[state=checked]:text-red-700
+                                border-gray-200 hover:border-red-600
+                                bg-white hover:bg-red-100
+                                text-gray-700 hover:text-red-600
+                                peer-data-[state=checked]:border-red-600
+                                peer-data-[state=checked]:bg-red-100
+                                peer-data-[state=checked]:text-red-600
                                 peer-data-[state=checked]:shadow-sm
-                                peer-data-[state=checked]:shadow-red-100
+                                peer-data-[state=checked]:shadow-red-200
                                 active:scale-[0.98]
                               `}
+
                             >
                               {detail.name[Language]}
                             </Label>
@@ -657,80 +647,84 @@ Can you confirm the order?`;
             <h4 className="font-medium text-gray-900">
               {Language === "ar" ? "خيارات الشراء" : "Purchase Options"}
             </h4>
-            
-            <ul className="space-y-4">
-              {product.prices.map((price) => {
-                // Get specification name and detail for this price
-                const specName = price.specification?.name[Language] || '';
-                const specDetail = price.specification_detail?.name[Language] || '';
-                
-                return (
-                  <li key={price.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">
-                          {specName && specDetail ? `${specName}: ${specDetail}` : Language === "ar" ? "الخيار الأساسي" : "Base Option"}
-                        </h4>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="text-lg font-bold text-primary">
-                            {price.final_price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
-                          </span>
-                          {price.discount > 0 && (
-                            <>
-                              <span className="text-sm text-gray-500 line-through">
-                                {price.price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
-                              </span>
-                              <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
-                                {price.discount}% {Language === "ar" ? "خصم" : "OFF"}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between gap-4">
-                          <h5 className="text-sm text-gray-600">
-                            {Language === "ar" ? "الكمية" : "Quantity"}
-                          </h5>
-                          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => decreaseQuantity(price.id)}
-                              disabled={(quantities[price.id] ?? 1) <= 1}
-                              className="h-10 w-10 rounded-none border-r border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </Button>
-                            <div className="h-10 w-12 flex items-center justify-center text-base font-medium">
-                              {quantities[price.id] || 1}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => increaseQuantity(price.id)}
-                              disabled={product.quantity <= (quantities[price.id] ?? 1)}
-                              className="h-10 w-10 rounded-none border-l border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </Button>
+            <div className="max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+              <ul className="space-y-4">
+                {product.prices.map((price, index) => {
+                  const specName = price.specification?.name[Language] || '';
+                  const specDetail = price.specification_detail?.name[Language] || '';
+                  const colorClass = selectedColors[price.id] || couponColors[index % couponColors.length];
+                  
+                  return (
+                    <li 
+                      key={price.id} 
+                      className={`${colorClass} border-2 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow w-[95%] mx-auto`}
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">
+                            {specName && specDetail ? `${specName}: ${specDetail}` : Language === "ar" ? "الخيار الأساسي" : "Base Option"}
+                          </h4>
+                          <div className="flex items-center gap-3 mt-2">
+                            <span className="text-lg font-bold text-primary">
+                              {price.final_price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
+                            </span>
+                            {price.discount > 0 && (
+                              <>
+                                <span className="text-sm text-gray-500 line-through">
+                                  {price.price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
+                                </span>
+                                <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                                  {price.discount}% {Language === "ar" ? "خصم" : "OFF"}
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                         
-                        <Button
-                          onClick={() => handleWhatsAppClick(price.id)}
-                          className="h-10 bg-green-100 text-green-700 hover:bg-green-200 shadow-sm transition-all"
-                        >
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          {Language === "ar" ? "اطلب عبر واتساب" : "Order via WhatsApp"}
-                        </Button>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center justify-between gap-4">
+                            <h5 className="text-sm text-gray-600">
+                              {Language === "ar" ? "الكمية" : "Quantity"}
+                            </h5>
+                            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => decreaseQuantity(price.id)}
+                                disabled={(quantities[price.id] ?? 1) <= 1}
+                                className="h-10 w-10 rounded-none border-r border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <div className="h-10 w-12 flex items-center justify-center text-base font-medium">
+                                {quantities[price.id] || 1}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => increaseQuantity(price.id)}
+                                disabled={product.quantity <= (quantities[price.id] ?? 1)}
+                                className="h-10 w-10 rounded-none border-l border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            onClick={() => addToCart(price)}
+                            className="h-10 bg-primary text-white hover:bg-primary/90 shadow-sm transition-all"
+                          >
+                            <ShoppingCart className={`${Language === "ar" ? "ml-2" : "mr-2"} w-4 h-4`} />
+                            {Language === "ar" ? "أضف إلى السلة" : "Add to Cart"}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </div>
 
           {/* Key product details */}
@@ -747,9 +741,9 @@ Can you confirm the order?`;
 
           {/* Location with map link */}
           {product.address && (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-black-100">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-100">
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-black-600 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm text-gray-500 mb-1">
                     {Language === "ar" ? "الموقع" : "Location"}
@@ -763,7 +757,7 @@ Can you confirm the order?`;
                       href={`https://maps.google.com/?q=${product.latitude},${product.longitude}`} 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block mt-2 text-sm text-black-600 hover:underline"
+                      className="inline-block mt-2 text-sm text-red-600 hover:underline"
                     >
                       {Language === "ar" ? "عرض على الخريطة" : "View on map"}
                     </a>
@@ -856,16 +850,11 @@ Can you confirm the order?`;
 
               {product.prices.length > 0 && (
                 <Button
-                  onClick={() => {
-                    const firstPriceId = product.prices[0]?.id;
-                    if (typeof firstPriceId === "number") {
-                      handleWhatsAppClick(firstPriceId);
-                    }
-                  }}
-                  className="flex-1 h-14 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
+                  onClick={() => addToCart(product.prices[0])}
+                  className="flex-1 h-14 bg-primary text-white hover:bg-primary/90 shadow-md transition-all"
                 >
-                  <MessageCircle className={`${Language === "ar" ? "ml-3" : "mr-3"} text-green-700`} size={20} />
-                  {Language === "ar" ? "إرسال الطلب عبر واتساب" : "Order via WhatsApp"}
+                  <ShoppingCart className={`${Language === "ar" ? "ml-3" : "mr-3"}`} size={20} />
+                  {Language === "ar" ? "أضف إلى السلة" : "Add to Cart"}
                 </Button>
               )}
             </div>
@@ -989,19 +978,24 @@ Can you confirm the order?`;
                 <Separator className="my-6" />
                 
                 <div className="flex flex-wrap gap-3">
-                  {product.prices.length > 0 && (
+                  {product.whatsapp_number && (
                     <Button 
                       variant="outline" 
                       className="flex items-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
-                      onClick={() => {
-                        const firstPriceId = product.prices[0]?.id;
-                        if (typeof firstPriceId === "number") {
-                          handleWhatsAppClick(firstPriceId);
-                        }
-                      }}
+                      asChild
                     >
-                      <MessageCircle className="w-4 h-4" />
-                      WhatsApp
+                      <a 
+                        href={`https://wa.me/${product.whatsapp_number}?text=${encodeURIComponent(
+                          Language === "ar" 
+                            ? `مرحبًا، أنا مهتم بمنتجكم: ${product.name.ar}`
+                            : `Hello, I'm interested in your product: ${product.name.en}`
+                        )}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        {Language === "ar" ? "واتساب" : "WhatsApp"}
+                      </a>
                     </Button>
                   )}
                 </div>
@@ -1015,13 +1009,13 @@ Can you confirm the order?`;
       <div className="mt-20">
         <div className="flex justify-between items-center mb-8">
           <h3 className="text-2xl font-bold text-gray-900 flex items-center">
-            <span className="w-4 h-8 bg-gradient-to-r from-red to-black-500 rounded-full mr-3"></span>
+            <span className="w-4 h-8 bg-gradient-to-r from-primary to-primary/70 rounded-full mr-3"></span>
             {Language === "ar" ? "منتجات مشابهة" : "Similar Products"}
           </h3>
           {similarProducts.length > 0 && (
             <a 
               href={`/ads?main_category_id=${product.main_category.slug}&sub_category_id=${product.sub_category.slug}`} 
-              className="text-red hover:text-primary/80 flex items-center gap-1 text-sm font-medium"
+              className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm font-medium"
             >
               {Language === "ar" ? "عرض الكل" : "View all"}
               <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
