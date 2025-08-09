@@ -314,7 +314,7 @@ export default function CartPage() {
                             <div className="flex flex-wrap gap-2 mb-2">
                               {item.specName && item.specDetail && (
                                 <p className="text-gray-600 text-sm">
-                                  <span className="font-medium">{item.specName}:</span> {item.specDetail}
+                                  <span className="font-medium"></span> {item.specDetail}
                                 </p>
                               )}
                             </div>
