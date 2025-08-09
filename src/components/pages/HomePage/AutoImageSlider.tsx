@@ -6,7 +6,7 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/effect-creative";
 import "swiper/css/parallax";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../../Context/LanguageContext";
 
@@ -25,6 +25,8 @@ export default function CompactCarImportGallery(): JSX.Element {
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const swiperRef = useRef<any>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const fetchGalleryImages = async () => {
@@ -45,69 +47,100 @@ export default function CompactCarImportGallery(): JSX.Element {
     fetchGalleryImages();
   }, []);
 
+  // Loading state with professional spinner
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[400px] bg-gray-100">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="text-gray-400 flex items-center"
+      <div className="flex justify-center items-center h-[400px] md:h-[500px]  rounded-xl overflow-hidden">
+        <div className="relative flex flex-col items-center">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-16 w-16 border-4 border-transparent border-t-red-600 border-r-red-600 rounded-full animate-spin"></div>
+            </div>
+            <div className="h-20 w-20 border-4 border-gray-800 rounded-full animate-pulse"></div>
+          </div>
+          <motion.p 
+            className="mt-6 text-gray-400 font-medium"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            {Language === "ar" ? "جاري تحميل الصور..." : "Loading gallery..."}
+          </motion.p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-[400px] ">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center p-8 bg-gray-800/90 backdrop-blur-md rounded-2xl max-w-md border border-gray-700 shadow-xl"
         >
-          <svg className="w-12 h-12 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 bg-red-500 rounded-full animate-ping"></div>
+            <svg className="relative w-16 h-16 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+          <p className="text-gray-200 mb-6 text-lg">{error}</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-xl text-white font-medium shadow-lg hover:shadow-red-500/30 transition-all"
+            onClick={() => window.location.reload()}
+          >
+            {Language === "ar" ? "إعادة المحاولة" : "Retry"}
+          </motion.button>
         </motion.div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-[400px] bg-gray-100">
-        <div className="text-center p-6 bg-white rounded-xl max-w-md border border-gray-200 shadow-sm">
-          <svg className="w-12 h-12 mx-auto mb-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="px-4 py-2 bg-gray-200 rounded-lg text-gray-700 text-sm"
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </motion.button>
-        </div>
-      </div>
-    );
-  }
-
+  // Empty state
   if (!galleryImages.length) {
     return (
-      <div className="flex justify-center items-center h-[400px] bg-gray-100">
-        <div className="text-center p-6 bg-white rounded-xl max-w-md border border-gray-200 shadow-sm">
-          <svg className="w-12 h-12 mx-auto mb-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      <div className="flex justify-center items-center h-[400px] bg-gray-900">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center p-8 bg-gray-800/90 backdrop-blur-md rounded-2xl border border-gray-700 shadow-xl"
+        >
+          <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
-          <p className="text-gray-600">No images available</p>
-        </div>
+          <h3 className="text-xl font-semibold text-gray-200 mb-2">
+            {Language === "ar" ? "لا توجد صور" : "No images available"}
+          </h3>
+          <p className="text-gray-400">
+            {Language === "ar" ? "لم يتم العثور على صور للمعرض" : "No gallery images found"}
+          </p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full mx-auto overflow-hidden group" dir={Language === "ar" ? "rtl" : "ltr"}>
+    <div 
+      className="relative w-full mx-auto overflow-hidden rounded-2xl shadow-2xl group"
+      dir={Language === "ar" ? "rtl" : "ltr"}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <Swiper
+        ref={swiperRef}
         modules={[Navigation, Pagination, Autoplay, EffectCreative, Parallax]}
         spaceBetween={0}
         slidesPerView={1}
         autoplay={{
-          delay: 6000,
+          delay: 5000,
           disableOnInteraction: false,
           pauseOnMouseEnter: true,
         }}
         loop={true}
-        speed={1000}
+        speed={1200}
         navigation={{
           nextEl: ".swiper-button-next",
           prevEl: ".swiper-button-prev",
@@ -123,59 +156,105 @@ export default function CompactCarImportGallery(): JSX.Element {
         creativeEffect={{
           prev: {
             shadow: true,
-            translate: ["-125%", 0, -600],
-            rotate: [0, 0, -20],
+            translate: ["-25%", 0, -800],
+            rotate: [0, 0, -5],
             opacity: 0,
           },
           next: {
             shadow: true,
-            translate: ["125%", 0, -600],
-            rotate: [0, 0, 20],
+            translate: ["25%", 0, -800],
+            rotate: [0, 0, 5],
             opacity: 0,
           },
         }}
         parallax={true}
         grabCursor={true}
-        className="w-full h-[400px] md:h-[500px] rounded-xl overflow-hidden shadow-lg"
+        className="w-full h-[400px] md:h-[500px]"
       >
-        <div
-          slot="container-start"
-          className="parallax-bg"
-          data-swiper-parallax="-25%"
-          style={{
-            background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 50%, #d1d5db 100%)",
-          }}
-        ></div>
-
         {galleryImages.map((image) => (
           <SwiperSlide key={image.id}>
-            <div className="relative h-full w-full flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/20 z-10" data-swiper-parallax="-100%"></div>
-
-              <motion.img
-                src={image.picture_url}
-                alt={`Gallery image ${image.id}`}
-                className="absolute inset-0 w-full h-full object-cover"
-                loading="lazy"
-                data-swiper-parallax="-35%"
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-              />
+            <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+              
+              {/* Reflective Floor Effect */}
+              <div className="absolute bottom-0 left-0 right-0 h-1/4 z-10 bg-gradient-to-t from-black/40 to-transparent"></div>
+              
+              {/* Image with parallax effect */}
+              <div 
+                className="absolute inset-0 w-full h-full"
+                data-swiper-parallax="-30%"
+              >
+                <img
+                  src={image.picture_url}
+                  alt={`Gallery image ${image.id}`}
+                  className="w-full h-full object-cover transform scale-110 transition-all duration-[1500ms] group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+              
+              {/* Subtle vignette */}
+              <div className="absolute inset-0 z-0 shadow-[inset_0_0_80px_20px_rgba(0,0,0,0.8)]"></div>
+              
+              {/* Light reflection effect */}
+              <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-white/10 to-transparent z-10 mix-blend-soft-light"></div>
             </div>
           </SwiperSlide>
         ))}
 
-        <div className={`swiper-button-next !h-10 !w-10 md:!h-12 md:!w-12 !rounded-full !bg-white/80 !backdrop-blur-sm !border !border-gray-200 hover:!bg-white !transition-all !duration-300 ${
-          Language === 'ar' ? '!left-2 md:!left-6' : '!right-2 md:!right-6'
-        } after:!text-gray-700 after:!text-xl md:after:!text-2xl after:!font-bold !opacity-80 hover:!opacity-100 shadow-lg`}></div>
+        {/* Custom Navigation Buttons */}
+        <div 
+          className={`swiper-button-next !h-10 !w-10 md:!h-12 md:!w-12 !rounded-full !bg-black/40 !backdrop-blur-sm !border !border-white/20 hover:!bg-black/60 !transition-all !duration-300 !opacity-0 group-hover:!opacity-100 ${
+            Language === 'ar' ? '!left-2 md:!left-6' : '!right-2 md:!right-6'
+          } after:!text-white after:!text-lg after:!font-thin`}
+        ></div>
         
-        <div className={`swiper-button-prev !h-10 !w-10 md:!h-12 md:!w-12 !rounded-full !bg-white/80 !backdrop-blur-sm !border !border-gray-200 hover:!bg-white !transition-all !duration-300 ${
-          Language === 'ar' ? '!right-2 md:!right-6' : '!left-2 md:!left-6'
-        } after:!text-gray-700 after:!text-xl md:after:!text-2xl after:!font-bold !opacity-80 hover:!opacity-100 shadow-lg`}></div>
+        <div 
+          className={`swiper-button-prev !h-10 !w-10 md:!h-12 md:!w-12 !rounded-full !bg-black/40 !backdrop-blur-sm !border !border-white/20 hover:!bg-black/60 !transition-all !duration-300 !opacity-0 group-hover:!opacity-100 ${
+            Language === 'ar' ? '!right-2 md:!right-6' : '!left-2 md:!left-6'
+          } after:!text-white after:!text-lg after:!font-thin`}
+        ></div>
 
-        <div className="swiper-pagination !bottom-4 !left-0 !right-0 !w-auto !flex !justify-center !items-center !gap-1"></div>
+        {/* Animated Pagination */}
+        <div className="swiper-pagination !bottom-5 !left-0 !right-0 !w-auto !flex !justify-center !items-center !gap-1"></div>
+        
+        {/* Floating Brand */}
+        <div className={`absolute top-6 z-20 ${Language === "ar" ? "right-6" : "left-6"}`}>
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-4 py-2 bg-black/50 backdrop-blur-sm rounded-full border border-white/10"
+          >
+            <span className="text-white font-semibold text-xs md:text-sm tracking-wider">
+              {Language === "ar" ? "استيراد سيارات" : "PREMIUM IMPORTS"}
+            </span>
+          </motion.div>
+        </div>
       </Swiper>
+      
+      {/* Floating Counter */}
+      <motion.div 
+        className={`absolute bottom-5 z-20 ${Language === "ar" ? "left-6" : "right-6"}`}
+        initial={{ opacity: 0, x: Language === "ar" ? -20 : 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <div className="px-3 py-1 bg-black/50 backdrop-blur-sm rounded-full">
+          <span className="text-white text-xs md:text-sm font-mono">
+            {swiperRef.current?.swiper?.realIndex + 1 || 1} / {galleryImages.length}
+          </span>
+        </div>
+      </motion.div>
+      
+      {/* Custom CSS for active pagination bullet */}
+      <style jsx global>{`
+        .swiper-pagination-bullet-active {
+          background-color: #ef4444 !important;
+          opacity: 1 !important;
+          transform: scale(1.2);
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+        }
+      `}</style>
     </div>
   );
 }

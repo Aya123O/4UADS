@@ -10,7 +10,44 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-type CartItem = {
+// Define interfaces for product data
+interface ProductSpecification {
+  id: number;
+  name: {
+    ar: string;
+    en: string;
+  };
+  details: {
+    id: number;
+    name: {
+      ar: string;
+      en: string;
+    };
+  }[];
+}
+
+interface ProductPrice {
+  id: number;
+  price: number;
+  discount: number;
+  final_price: number;
+  specification: {
+    id: number;
+    name: {
+      ar: string;
+      en: string;
+    };
+  } | null;
+  specification_detail: {
+    id: number;
+    name: {
+      ar: string;
+      en: string;
+    };
+  } | null;
+}
+
+interface CartItem {
   id: number;
   productId: number;
   name: string;
@@ -18,9 +55,23 @@ type CartItem = {
   quantity: number;
   image: string;
   slug: string;
-  color: string;
-  storage: string;
-};
+  specName: string;
+  specDetail: string;
+  color?: string;
+  fullProductData: {
+    product: {
+      id: number;
+      name: {
+        ar: string;
+        en: string;
+      };
+      prices: ProductPrice[];
+      specifications: string;
+      product_specifications: ProductSpecification[];
+    };
+    selectedPriceId: number;
+  };
+}
 
 // Language content for the cart page
 const cartContent = {
@@ -43,6 +94,7 @@ const cartContent = {
     remove: "Remove",
     color: "Color",
     storage: "Storage",
+    specs: "Specifications",
     checkoutTitle: "Complete Your Purchase",
     name: "Full Name",
     phone: "Phone Number",
@@ -73,6 +125,7 @@ const cartContent = {
     remove: "إزالة",
     color: "اللون",
     storage: "المساحة",
+    specs: "المواصفات",
     checkoutTitle: "أكمل عملية الشراء",
     name: "الاسم بالكامل",
     phone: "رقم الهاتف",
@@ -182,6 +235,15 @@ export default function CartPage() {
     }
   };
 
+  // Parse JSON specifications
+  const parseSpecifications = (specsString: string) => {
+    try {
+      return JSON.parse(specsString);
+    } catch (e) {
+      return [];
+    }
+  };
+
   return (
     <div 
       className="container mx-auto px-4 py-8"
@@ -227,79 +289,96 @@ export default function CartPage() {
               </div>
               
               <div className="divide-y divide-gray-100">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="p-6 flex flex-col sm:flex-row gap-6">
-                    <div className="bg-gray-100 rounded-xl w-24 h-24 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={96}
-                        height={96}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <div>
-                          <h3 className="font-medium text-lg mb-1">{item.name}</h3>
-                          
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {item.color && (
-                              <p className="text-gray-600 text-sm">
-                                <span className="font-medium">{content.color}:</span> {item.color}
-                              </p>
-                            )}
-                            {item.storage && (
-                              <p className="text-gray-600 text-sm">
-                                <span className="font-medium">{content.storage}:</span> {item.storage}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => removeItem(item.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
+                {cartItems.map((item) => {
+                  // Parse specifications from product data
+                  const productSpecs = parseSpecifications(item.fullProductData.product.specifications);
+                  
+                  return (
+                    <div key={item.id} className="p-6 flex flex-col sm:flex-row gap-6">
+                      <div className="bg-gray-100 rounded-xl w-24 h-24 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          width={96}
+                          height={96}
+                          className="object-cover w-full h-full"
+                        />
                       </div>
                       
-                      <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
-                        <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="h-10 w-10 rounded-none border-r border-gray-200 hover:bg-gray-100"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <div className="h-10 w-12 flex items-center justify-center text-base font-medium">
-                            {item.quantity}
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <div>
+                            <h3 className="font-medium text-lg mb-1">{item.name}</h3>
+                            
+                            {/* Display selected specification */}
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {item.specName && item.specDetail && (
+                                <p className="text-gray-600 text-sm">
+                                  <span className="font-medium">{item.specName}:</span> {item.specDetail}
+                                </p>
+                              )}
+                            </div>
+                            
+                            {/* Display all specifications */}
+                            {productSpecs.length > 0 && (
+                              <div className="mt-3">
+                                <h4 className="text-sm font-medium text-gray-700 mb-1">
+                                  {content.specs}:
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {productSpecs.map((spec: any, index: number) => (
+                                    <div key={index} className="text-gray-600 text-sm">
+                                      <span className="font-medium">{spec.key}:</span> {spec.value}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="h-10 w-10 rounded-none border-l border-gray-200 hover:bg-gray-100"
+                          <button 
+                            onClick={() => removeItem(item.id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
                           >
-                            <Plus className="w-4 h-4" />
-                          </Button>
+                            <X className="w-5 h-5" />
+                          </button>
                         </div>
                         
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-primary">
-                            {(item.price * item.quantity).toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {item.price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"} × {item.quantity}
-                          </p>
+                        <div className="flex flex-wrap items-center justify-between gap-4 mt-2">
+                          <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              className="h-10 w-10 rounded-none border-r border-gray-200 hover:bg-gray-100"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                            <div className="h-10 w-12 flex items-center justify-center text-base font-medium">
+                              {item.quantity}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              className="h-10 w-10 rounded-none border-l border-gray-200 hover:bg-gray-100"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-primary">
+                              {(item.price * item.quantity).toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {item.price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"} × {item.quantity}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

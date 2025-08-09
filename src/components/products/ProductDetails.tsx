@@ -167,6 +167,11 @@ interface CartItem {
   specName: string;
   specDetail: string;
   color?: string;
+  // Added fields for all product data
+  fullProductData: {
+    product: Product;
+    selectedPriceId: number;
+  };
 }
 
 interface ApiResponse {
@@ -174,7 +179,7 @@ interface ApiResponse {
 }
 
 export default function ProductDetails() {
-  const toast  = useToast();
+  const  toast  = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -221,7 +226,6 @@ export default function ProductDetails() {
             const initialSpecs: SelectedSpecs = {};
             result.data.product_specifications.forEach((spec) => {
               if (spec.details && spec.details.length > 0) {
-                // Fixed: Added non-null assertion
                 const firstDetail = spec.details[0]!;
                 initialSpecs[spec.id] = {
                   specId: spec.id,
@@ -292,7 +296,8 @@ export default function ProductDetails() {
 
   const addToCart = (price: any) => {
     if (!product) return;
-
+    
+    // Create cart item with all product data
     const cartItem: CartItem = {
       id: Date.now(),
       productId: product.id,
@@ -303,10 +308,14 @@ export default function ProductDetails() {
       slug: product.slug,
       specName: price.specification?.name[Language] || '',
       specDetail: price.specification_detail?.name[Language] || '',
-      color: selectedColors[price.id]
+      color: selectedColors[price.id],
+      // Include full product data
+      fullProductData: {
+        product: product,
+        selectedPriceId: price.id
+      }
     };
 
-    // Get existing cart from localStorage
     const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
     
     // Check if this exact item already exists in cart
@@ -582,65 +591,33 @@ export default function ProductDetails() {
             </div>
           </div>
 
-          {/* Product Specifications with Radio Buttons */}
-          {product.product_specifications.length > 0 && (
-            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-              <h4 className="font-medium text-gray-900 mb-3">
-                {Language === "ar" ? "مواصفات المنتج" : "Product Specifications"}
-              </h4>
-              <div className="space-y-6">
-                {product.product_specifications.map((spec) => (
-                  <div key={spec.id} className="space-y-3">
-                    <h5 className="text-sm font-medium text-gray-700">
-                      {spec.name[Language]}
-                    </h5>
-                    <RadioGroup 
-                      value={selectedSpecs[spec.id]?.detailId.toString() || ''}
-                      onValueChange={(value) => {
-                        const detail = spec.details.find(d => d.id.toString() === value);
-                        if (detail) {
-                          handleSpecChange(spec.id, detail.id, detail.name[Language]);
-                        }
-                      }}
-                      className="grid grid-cols-3 gap-3"
-                    >
-                      {spec.details.map((detail) => (
-                        <div key={detail.id}>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem 
-                              value={detail.id.toString()} 
-                              id={`${spec.id}-${detail.id}`}
-                              className="peer hidden"
-                            />
-                            <Label
-                              htmlFor={`${spec.id}-${detail.id}`}
-                              className={`
-                                flex flex-1 items-center justify-center
-                                rounded-lg border-2 p-3 text-sm font-medium
-                                cursor-pointer transition-all duration-200
-                                border-gray-200 hover:border-red-600
-                                bg-white hover:bg-red-100
-                                text-gray-700 hover:text-red-600
-                                peer-data-[state=checked]:border-red-600
-                                peer-data-[state=checked]:bg-red-100
-                                peer-data-[state=checked]:text-red-600
-                                peer-data-[state=checked]:shadow-sm
-                                peer-data-[state=checked]:shadow-red-200
-                                active:scale-[0.98]
-                              `}
-
-                            >
-                              {detail.name[Language]}
-                            </Label>
+          {/* Product Specifications - Compact List */}
+            {product.product_specifications.length > 0 && (
+              <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <h4 className="font-bold text-gray-800 mb-5 text-lg border-b pb-3">
+                  {Language === "ar" ? "مواصفات المنتج" : "Product Specifications"}
+                </h4>
+                
+                <div className="space-y-4">
+                  {product.product_specifications.map((spec) => (
+                    <div key={spec.id} className="flex flex-col sm:flex-row sm:items-start">
+                      <div className="flex flex-wrap gap-2">
+                        {spec.details.map((detail) => (
+                          <div
+                            key={detail.id}
+                            className="px-3 py-2 text-sm font-medium rounded-md
+                                      bg-gray-50 border border-gray-200 text-gray-700
+                                      flex items-center"
+                          >
+                            {detail.name[Language]}
                           </div>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-                ))}
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Price variants displayed as coupon-like list */}
           <div className="space-y-4">
@@ -662,7 +639,7 @@ export default function ProductDetails() {
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900">
-                            {specName && specDetail ? `${specName}: ${specDetail}` : Language === "ar" ? "الخيار الأساسي" : "Base Option"}
+                            {specName && specDetail ? ` ${specDetail}` : Language === "ar" ? "الخيار الأساسي" : "Base Option"}
                           </h4>
                           <div className="flex items-center gap-3 mt-2">
                             <span className="text-lg font-bold text-primary">
@@ -848,15 +825,7 @@ export default function ProductDetails() {
                   : "Show Phone Number"}
               </Button>
 
-              {product.prices.length > 0 && (
-                <Button
-                  onClick={() => addToCart(product.prices[0])}
-                  className="flex-1 h-14 bg-primary text-white hover:bg-primary/90 shadow-md transition-all"
-                >
-                  <ShoppingCart className={`${Language === "ar" ? "ml-3" : "mr-3"}`} size={20} />
-                  {Language === "ar" ? "أضف إلى السلة" : "Add to Cart"}
-                </Button>
-              )}
+             
             </div>
           </div>
         </div>
