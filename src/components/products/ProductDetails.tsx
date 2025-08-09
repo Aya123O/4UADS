@@ -642,12 +642,12 @@ export default function ProductDetails() {
                             {specName && specDetail ? ` ${specDetail}` : Language === "ar" ? "الخيار الأساسي" : "Base Option"}
                           </h4>
                           <div className="flex items-center gap-3 mt-2">
-                            <span className="text-lg font-bold text-primary">
+                            <span className="text-lg font-bold ">
                               {price.final_price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
                             </span>
                             {price.discount > 0 && (
                               <>
-                                <span className="text-sm text-gray-500 line-through">
+                                <span className="text-sm  line-through">
                                   {price.price.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}
                                 </span>
                                 <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
@@ -690,7 +690,7 @@ export default function ProductDetails() {
                           
                           <Button
                             onClick={() => addToCart(price)}
-                            className="h-10 bg-primary text-white hover:bg-primary/90 shadow-sm transition-all"
+                            className="h-10 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
                           >
                             <ShoppingCart className={`${Language === "ar" ? "ml-2" : "mr-2"} w-4 h-4`} />
                             {Language === "ar" ? "أضف إلى السلة" : "Add to Cart"}

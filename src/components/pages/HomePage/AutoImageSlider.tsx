@@ -50,13 +50,13 @@ export default function CompactCarImportGallery(): JSX.Element {
   // Loading state with professional spinner
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[400px] md:h-[500px]  rounded-xl overflow-hidden">
+      <div className="flex justify-center items-center h-[400px] md:h-[500px]   overflow-hidden">
         <div className="relative flex flex-col items-center">
           <div className="relative">
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-16 w-16 border-4 border-transparent border-t-red-600 border-r-red-600 rounded-full animate-spin"></div>
+              <div className="h-16 w-16 border-4 border-transparent border-t-red-600 border-r-red-600  animate-spin"></div>
             </div>
-            <div className="h-20 w-20 border-4 border-gray-800 rounded-full animate-pulse"></div>
+            <div className="h-20 w-20 border-4   animate-pulse"></div>
           </div>
           <motion.p 
             className="mt-6 text-gray-400 font-medium"
@@ -124,7 +124,7 @@ export default function CompactCarImportGallery(): JSX.Element {
 
   return (
     <div 
-      className="relative w-full mx-auto overflow-hidden rounded-2xl shadow-2xl group"
+      className="relative w-full mx-auto overflow-hidden  shadow-2xl group"
       dir={Language === "ar" ? "rtl" : "ltr"}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -175,10 +175,10 @@ export default function CompactCarImportGallery(): JSX.Element {
           <SwiperSlide key={image.id}>
             <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
               {/* Gradient Overlay */}
-              <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+              <div className="absolute inset-0 z-10 "></div>
               
               {/* Reflective Floor Effect */}
-              <div className="absolute bottom-0 left-0 right-0 h-1/4 z-10 bg-gradient-to-t from-black/40 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-1/4 z-10 "></div>
               
               {/* Image with parallax effect */}
               <div 
