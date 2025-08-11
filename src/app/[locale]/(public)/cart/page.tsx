@@ -259,7 +259,7 @@ export default function CartPage() {
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-12 inline-block">
             <ShoppingCart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <p className="text-xl mb-4">{content.empty}</p>
-            <Link href="/products">
+            <Link href="/">
               <Button variant="default" className="px-6 py-6 text-lg">
                 {content.continue}
               </Button>

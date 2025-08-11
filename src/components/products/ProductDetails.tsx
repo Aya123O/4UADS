@@ -530,7 +530,7 @@ export default function ProductDetails() {
         <div className="space-y-6">
           <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl overflow-hidden shadow-lg">
             <Image
-              src={product.picture_url}
+              src={product.picture_url || "/assets/images/default.png"}
               alt={product.name[Language]}
               fill
               className="object-cover transition-all duration-500 hover:scale-105"
@@ -690,7 +690,7 @@ export default function ProductDetails() {
                           
                           <Button
                             onClick={() => addToCart(price)}
-                            className="h-10 bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all"
+                            className="h-10  bg-red-100 text-red-500 shadow-md hover:bg-red-200  transition-all"
                           >
                             <ShoppingCart className={`${Language === "ar" ? "ml-2" : "mr-2"} w-4 h-4`} />
                             {Language === "ar" ? "أضف إلى السلة" : "Add to Cart"}
@@ -910,7 +910,7 @@ export default function ProductDetails() {
               <div className="md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-gray-100 p-6 bg-gradient-to-b from-gray-50 to-white">
                 <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg mx-auto">
                   <Image
-                    src={product.customer.picture_url}
+                    src={product.customer.picture_url || "/assets/images/default.png"}
                     alt={product.customer.name}
                     fill
                     className="object-cover"
@@ -1041,7 +1041,7 @@ export default function ProductDetails() {
                   <CardContent className="p-0">
                     <div className="relative aspect-square bg-gray-100">
                       <Image
-                        src={item.picture_url}
+                        src={item.picture_url || "/assets/images/default.png"}
                         alt={item.name[Language]}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"

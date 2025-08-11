@@ -105,89 +105,79 @@ export default function CategoriesAndListings({
     return stars;
   };
 
-  const ProductCard = ({ product }: { product: Product }) => (
-    <div 
-      className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 relative flex flex-col h-full"
-      onClick={() => navigateToProduct(product.slug)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && navigateToProduct(product.slug)}
-      aria-label={`View ${product.name[Language]} details`}
-    >
-      <div className="relative aspect-square overflow-hidden flex-shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
-        {product.picture_url ? (
-          <img
-            src={product.picture_url}
-            alt={product.name[Language]}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            loading="lazy"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.onerror = null;
-              target.src = '/placeholder-product.jpg';
-            }}
-            style={{
-              objectFit: 'cover',
-              width: '100%',
-              height: '100%'
-            }}
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-            <ImageIcon className="w-12 h-12 text-gray-400" />
-          </div>
-        )}
-        {product.discount > 0 && (
-          <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-20">
-            {Language === "ar" ? "خصم" : "Sale"} {product.discount}%
-          </div>
-        )}
-      </div>
+  const ProductCard = ({ product }: { product: Product }) => {
+    const [imageError, setImageError] = React.useState(false);
+    const hasImage = product.picture_url && !imageError;
 
-      <div className="p-4 flex flex-col flex-grow">
-        <div className="flex flex-col sm:flex-row sm:justify-between items-start mb-3 gap-2 sm:gap-0">
-          <h3 className="font-bold text-gray-900 line-clamp-2 text-lg flex-grow">
-            {product.name[Language]}
-          </h3>
-          {/* <div className="flex flex-col items-start sm:items-end">
-            <span className="font-bold text-xl text-gray-900">
-              {product.final_price} {Language === "ar" ? "ج.م" : "EGP"}
-            </span>
-            {product.discount > 0 && (
-              <span className="text-sm text-gray-500 line-through">
-                {product.price} {Language === "ar" ? "ج.م" : "EGP"}
+    return (
+      <div 
+        className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 relative flex flex-col h-full"
+        onClick={() => navigateToProduct(product.slug)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && navigateToProduct(product.slug)}
+        aria-label={`View ${product.name[Language]} details`}
+      >
+        <div className="relative aspect-square overflow-hidden flex-shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
+          {hasImage ? (
+            <img
+              src={product.picture_url ?? ""}
+              alt={product.name[Language]}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              loading="lazy"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+              <img 
+                src="../assets/images/default.png" 
+                alt={product.name[Language]} 
+                className="object-cover w-full h-full"
+              />
+            </div>
+          )}
+          {product.discount > 0 && (
+            <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-20">
+              {Language === "ar" ? "خصم" : "Sale"} {product.discount}%
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 flex flex-col flex-grow">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start mb-3 gap-2 sm:gap-0">
+            <h3 className="font-bold text-gray-900 line-clamp-2 text-lg flex-grow">
+              {product.name[Language]}
+            </h3>
+          </div>
+
+          {product.rating && (
+            <div className="flex items-center gap-1 mb-4">
+              {renderStars(product.rating)}
+              <span className="text-xs text-gray-500 ml-1">
+                ({product.rating.toFixed(1)})
               </span>
-            )}
-          </div> */}
-        </div>
+            </div>
+          )}
 
-        {product.rating && (
-          <div className="flex items-center gap-1 mb-4">
-            {renderStars(product.rating)}
-            <span className="text-xs text-gray-500 ml-1">
-              ({product.rating.toFixed(1)})
-            </span>
+          <div className="mt-auto pt-2 flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-sm h-9 border-red-100 bg-red-500 hover:bg-red-500 hover:text-white text-white rounded-lg w-1/2 mx-auto"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateToProduct(product.slug);
+              }}
+            >
+              {Language === "ar" ? "التفاصيل" : "Details"}
+            </Button>
           </div>
-        )}
-
-        <div className="mt-auto pt-2 flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-sm h-9 border-red-100 bg-red-500 hover:bg-red-500 hover:text-white text-white rounded-lg w-1/2 mx-auto"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToProduct(product.slug);
-            }}
-          >
-            {Language === "ar" ? "التفاصيل" : "Details"}
-          </Button>
         </div>
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br from-gray-100 to-black transition-opacity duration-300 pointer-events-none"></div>
       </div>
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-br from-gray-100 to-black transition-opacity duration-300 pointer-events-none"></div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -222,7 +212,7 @@ export default function CategoriesAndListings({
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
         <div className="inline-block bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-600 px-6 py-4 rounded-xl shadow-sm">
-          <div className="font-bold text-lg mb-1">⚠️ {Language === "ar" ? "خطأ" : "Error"}</div>
+          <div className="font-bold text-lg mb-1">{Language === "ar" ? "خطأ" : "Error"}</div>
           <div>{error}</div>
         </div>
       </div>
