@@ -297,7 +297,7 @@ export default function CartPage() {
                     <div key={item.id} className="p-6 flex flex-col sm:flex-row gap-6">
                       <div className="bg-gray-100 rounded-xl w-24 h-24 flex-shrink-0 flex items-center justify-center overflow-hidden">
                         <Image
-                          src={item.image}
+                          src={item.image || "/assets/images/default.png"}
                           alt={item.name}
                           width={96}
                           height={96}

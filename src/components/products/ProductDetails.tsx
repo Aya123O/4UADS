@@ -481,49 +481,8 @@ export default function ProductDetails() {
       className="container mx-auto px-4 sm:px-6 lg:px-8 py-12"
       dir={Language === "ar" ? "rtl" : "ltr"}
     >
-      {/* Breadcrumb */}
-      <nav className="flex items-center mb-8">
-        <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-          <li className="inline-flex items-center">
-            <a 
-              href="/" 
-              className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-primary transition-colors"
-            >
-              {Language === "ar" ? "الرئيسية" : "Home"}
-            </a>
-          </li>
-          <li>
-            <div className="flex items-center">
-              <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
-              <a 
-                href={`/products?main_category_id=${product.main_category.slug}`} 
-                className="text-sm font-medium text-gray-500 hover:text-primary transition-colors"
-              >
-                {product.main_category.name[Language]}
-              </a>
-            </div>
-          </li>
-          <li>
-            <div className="flex items-center">
-              <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
-              <a 
-                href={`/products?sub_category_id=${product.sub_category.slug}`} 
-                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-              >
-                {product.sub_category.name[Language]}
-              </a>
-            </div>
-          </li>
-          <li aria-current="page">
-            <div className="flex items-center">
-              <ChevronRight className="w-4 h-4 mx-2 text-gray-400 rtl:rotate-180" />
-              <span className="text-sm font-medium text-black">
-                {product.name[Language]}
-              </span>
-            </div>
-          </li>
-        </ol>
-      </nav>
+      
+    
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Image Gallery */}
