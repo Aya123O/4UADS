@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   ChevronDown, 
@@ -135,6 +134,18 @@ export default function NavBanner() {
     setIsLocationDropdownOpen(!isLocationDropdownOpen);
   };
 
+  // Initialize search term from URL query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlSearchTerm = params.get('q');
+    
+    if (urlSearchTerm) {
+      const decodedTerm = decodeURIComponent(urlSearchTerm);
+      setSearchTerm(decodedTerm);
+      setShowSearchResults(true);
+    }
+  }, [pathname]);
+
   // Navigation function
   const navigateToHome = () => {
     router.push("/");
@@ -230,16 +241,16 @@ export default function NavBanner() {
       }
 
       try {
-        const response = await fetch(SEARCH_API, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            search: searchTerm,
-            lang: Language
-          })
-        });
+        // Changed to GET request with query parameters
+        const response = await fetch(
+          `${SEARCH_API}?search=${encodeURIComponent(searchTerm)}&lang=${Language}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
