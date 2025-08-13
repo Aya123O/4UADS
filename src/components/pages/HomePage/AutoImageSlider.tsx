@@ -47,19 +47,19 @@ export default function CompactCarImportGallery(): JSX.Element {
     fetchGalleryImages();
   }, []);
 
-  // Loading state with professional spinner
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[400px] md:h-[500px]   overflow-hidden">
+      <div className="flex justify-center items-center h-[400px] md:h-[500px] overflow-hidden">
         <div className="relative flex flex-col items-center">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-16 w-16 border-4 border-transparent border-t-red-600 border-r-red-600  animate-spin"></div>
-            </div>
-            <div className="h-20 w-20 border-4   animate-pulse"></div>
+          <div className="relative h-10 w-10">
+            {/* Large static inner circle */}
+            <div className="absolute inset-0 rounded-full bg-blue-900 m-1"></div>
+            
+            {/* Rotating outer circle */}
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-600 border-r-red-600 animate-spin"></div>
           </div>
           <motion.p 
-            className="mt-6 text-gray-400 font-medium"
+            className="mt-6 text-gray-400 font-medium text-sm"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
@@ -124,7 +124,7 @@ export default function CompactCarImportGallery(): JSX.Element {
 
   return (
     <div 
-      className="relative w-full mx-auto overflow-hidden  shadow-2xl group"
+      className="relative w-full mx-auto overflow-hidden shadow-2xl group"
       dir={Language === "ar" ? "rtl" : "ltr"}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -217,19 +217,6 @@ export default function CompactCarImportGallery(): JSX.Element {
 
         {/* Animated Pagination */}
         <div className="swiper-pagination !bottom-5 !left-0 !right-0 !w-auto !flex !justify-center !items-center !gap-1"></div>
-        
-        {/* Floating Brand */}
-        <div className={`absolute top-6 z-20 ${Language === "ar" ? "right-6" : "left-6"}`}>
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="px-4 py-2 bg-black/50 backdrop-blur-sm rounded-full border border-white/10"
-          >
-            <span className="text-white font-semibold text-xs md:text-sm tracking-wider">
-              {Language === "ar" ? "استيراد سيارات" : "PREMIUM IMPORTS"}
-            </span>
-          </motion.div>
-        </div>
       </Swiper>
       
       {/* Floating Counter */}
@@ -246,7 +233,6 @@ export default function CompactCarImportGallery(): JSX.Element {
         </div>
       </motion.div>
       
-      {/* Custom CSS for active pagination bullet */}
       <style jsx global>{`
         .swiper-pagination-bullet-active {
           background-color: #ef4444 !important;

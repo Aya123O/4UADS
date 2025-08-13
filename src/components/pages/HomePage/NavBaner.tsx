@@ -130,14 +130,17 @@ export default function NavBanner() {
   const [mobileScrollLeft, setMobileScrollLeft] = useState(0);
   const [mobileScrollRight, setMobileScrollRight] = useState(0);
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  
   const toggleLocationDropdown = () => {
-  setIsLocationDropdownOpen(!isLocationDropdownOpen);
-    const handleLogoClick = () => {
+    setIsLocationDropdownOpen(!isLocationDropdownOpen);
+  };
+
+  // Navigation function
+  const navigateToHome = () => {
     router.push("/");
     setIsMobileMenuOpen(false);
     setActiveCategory(null);
   };
-};
 
   useEffect(() => {
     const fetchData = async () => {
@@ -354,12 +357,6 @@ export default function NavBanner() {
     setActiveCategory(null);
   };
 
-  const navigateToHome = () => {
-    router.push("/");
-    setIsMobileMenuOpen(false);
-    setActiveCategory(null);
-  };
-
   const handleCategoryClick = (category: Category) => {
     if (category.sub_categories?.length > 0) {
       setActiveCategory(activeCategory?.id === category.id ? null : category);
@@ -382,26 +379,12 @@ export default function NavBanner() {
     setActiveCategory(null);
   };
 
+  // Fixed search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
       setShowSearchResults(false);
-    }
-  };
-
-  const handleSearchIconClick = () => {
-    if (searchTerm.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
-      setShowSearchResults(false);
-    }
-  };
-
-  const handleMobileSearchIconClick = () => {
-    if (searchTerm.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
-      setShowSearchResults(false);
-      setIsMobileMenuOpen(false);
     }
   };
 
@@ -496,12 +479,11 @@ export default function NavBanner() {
  const renderMobileCategories = () => (
   <div className="md:hidden">
     <div className="flex items-center justify-between py-2 px-4 border-b border-gray-200 bg-white">
-      {/* Clickable Logo/Brand */}
       <div 
         className="flex items-center cursor-pointer"
         role="button"
         tabIndex={0}
-       
+        onClick={navigateToHome}
       >
         {businessInfo?.business_logo_url ? (
           <div className="flex items-center gap-2">
@@ -511,11 +493,10 @@ export default function NavBanner() {
                 alt={businessInfo.business_name?.[Language] || "4YOUAD"}
                 width={40}
                 height={40}
-                onClick={navigateToHome}
                 className="object-cover w-full h-full"
               />
             </div>
-            <span onClick={navigateToHome} className="text-lg font-bold text-gray-800">
+            <span className="text-lg font-bold text-gray-800">
               4YOU<span className="text-red-600">AD</span>
             </span>
           </div>
@@ -546,26 +527,27 @@ export default function NavBanner() {
       <div className="bg-white shadow-lg border-t border-gray-200">
         <div className="overflow-y-visible">
           <div className="p-3 border-b border-gray-200" ref={mobileSearchRef}>
-            <div className="relative flex items-center">
-              <Input
-                type="search"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setShowSearchResults(e.target.value.trim().length > 0);
-                }}
-                onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
-                placeholder={currentContent.searchPlaceholder}
-                className="w-full pl-10 pr-3 py-2 text-sm rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm"
-              />
-              <button 
-                type="button"
-                onClick={handleMobileSearchIconClick}
-                className={`absolute ${Language === 'ar' ? 'left-3' : 'right-3'} top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm`}
-              >
-                <Search className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <form onSubmit={handleSearchSubmit}>
+              <div className="relative flex items-center">
+                <Input
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setShowSearchResults(e.target.value.trim().length > 0);
+                  }}
+                  onFocus={() => setShowSearchResults(searchTerm.trim().length > 0)}
+                  placeholder={currentContent.searchPlaceholder}
+                  className="w-full pl-10 pr-3 py-2 text-sm rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm"
+                />
+                <button 
+                  type="submit"
+                  className={`absolute ${Language === 'ar' ? 'left-3' : 'right-3'} top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm`}
+                >
+                  <Search className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </form>
 
             {showSearchResults && searchResults.length > 0 && (
               <div className="absolute z-[100] left-0 right-0 mt-1 mx-3 bg-white rounded-lg shadow-lg border border-gray-200 max-h-72 overflow-y-auto">
@@ -854,105 +836,108 @@ export default function NavBanner() {
     <div className="hidden md:flex items-center justify-between bg-gray-50 px-4 py-2 border-b border-gray-200">
       {/* Logo */}
       <div className="flex items-center">
-  {/* Logo Section */}
-  <div className="flex-shrink-0 flex items-center gap-3 mr-4 ml-3">
-    {businessInfo?.business_logo_url ? (
-      <div className="flex items-center gap-3 mr-10">
-        <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-red-200 ">
-          <Image
-            src={businessInfo.business_logo_url}
-            alt={businessInfo.business_name?.[Language] || "4YOUAD"}
-            width={48}
-            height={48}
-            className="object-cover w-full h-full"
-          />
+        {/* Logo Section */}
+        <div 
+          className="flex-shrink-0 flex items-center gap-3 mr-4 ml-3 cursor-pointer"
+          onClick={navigateToHome}
+        >
+          {businessInfo?.business_logo_url ? (
+            <div className="flex items-center gap-3 mr-10">
+              <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-red-200">
+                <Image
+                  src={businessInfo.business_logo_url}
+                  alt={businessInfo.business_name?.[Language] || "4YOUAD"}
+                  width={48}
+                  height={48}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <span className="text-lg font-bold text-gray-800 hidden sm:block">
+                {businessInfo.business_name?.[Language] || "4YOUAD"}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-red-600 text-white flex items-center justify-center text-xl font-bold">
+                4Y
+              </div>
+              <span className="text-lg font-bold text-gray-800 hidden sm:block">
+                {businessInfo?.business_name?.[Language] || "4YOUAD"}
+              </span>
+            </div>
+          )}
         </div>
-        <span className="text-lg font-bold text-gray-800 hidden sm:block">
-          {businessInfo.business_name?.[Language] || "4YOUAD"}
-        </span>
-      </div>
-    ) : (
-      <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-full bg-red-600 text-white flex items-center justify-center text-xl font-bold">
-          4Y
-        </div>
-        <span className="text-lg font-bold text-gray-800 hidden sm:block">
-          {businessInfo?.business_name?.[Language] || "4YOUAD"}
-        </span>
-      </div>
-    )}
-  </div>
 
-  {/* Country and City Dropdowns */}
-  <div className="flex items-center gap-2 mr-10">
-    <div className="relative">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={toggleCountryDropdown}
-        className="text-sm font-semibold"
-      >
-        <span className="truncate max-w-[100px]">
-          {selectedCountry ? selectedCountry.name[Language] : currentContent.selectCountry}
-        </span>
-        <ChevronDown className="h-3.5 w-3.5 ml-1" />
-      </Button>
-      
-      {isCountryDropdownOpen && (
-        <div className="absolute z-10 mt-1 w-40 rounded-md bg-white shadow-lg border border-gray-200 max-h-60 overflow-auto">
-          {countries.map((country) => (
-            <button
-              key={country.id}
-              onClick={() => handleSelectCountry(country)}
-              className={`block w-full text-left px-3 py-2 text-sm ${
-                selectedCountry?.id === country.id 
-                  ? 'bg-red-50 text-red-700 font-semibold' 
-                  : 'text-gray-700 hover:bg-gray-100'
+        {/* Country and City Dropdowns */}
+        <div className="flex items-center gap-2 mr-10">
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleCountryDropdown}
+              className="text-sm font-semibold"
+            >
+              <span className="truncate max-w-[100px]">
+                {selectedCountry ? selectedCountry.name[Language] : currentContent.selectCountry}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 ml-1" />
+            </Button>
+            
+            {isCountryDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-40 rounded-md bg-white shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                {countries.map((country) => (
+                  <button
+                    key={country.id}
+                    onClick={() => handleSelectCountry(country)}
+                    className={`block w-full text-left px-3 py-2 text-sm ${
+                      selectedCountry?.id === country.id 
+                        ? 'bg-red-50 text-red-700 font-semibold' 
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {country.name[Language]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleCityDropdown}
+              disabled={!selectedCountry}
+              className={`text-sm font-semibold w-[200px] ${
+                !selectedCountry ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {country.name[Language]}
-            </button>
-          ))}
+              <span className="truncate max-w-[100px]">
+                {selectedCity ? selectedCity.name[Language] : currentContent.selectCity}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 ml-1" />
+            </Button>
+            
+            {isCityDropdownOpen && selectedCountry && (
+              <div className="absolute z-10 mt-1 w-40 rounded-md bg-white shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                {selectedCountry.cities.map((city) => (
+                  <button
+                    key={city.id}
+                    onClick={() => handleSelectCity(city)}
+                    className={`block w-full text-left px-3 py-2 text-sm ${
+                      selectedCity?.id === city.id 
+                        ? 'bg-red-50 text-red-700 font-semibold' 
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {city.name[Language]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
-
-    <div className="relative">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={toggleCityDropdown}
-        disabled={!selectedCountry}
-        className={`text-sm font-semibold w-[200px] ${
-          !selectedCountry ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
-      >
-        <span className="truncate max-w-[100px]">
-          {selectedCity ? selectedCity.name[Language] : currentContent.selectCity}
-        </span>
-        <ChevronDown className="h-3.5 w-3.5 ml-1" />
-      </Button>
-      
-      {isCityDropdownOpen && selectedCountry && (
-        <div className="absolute z-10 mt-1 w-40 rounded-md bg-white shadow-lg border border-gray-200 max-h-60 overflow-auto">
-          {selectedCountry.cities.map((city) => (
-            <button
-              key={city.id}
-              onClick={() => handleSelectCity(city)}
-              className={`block w-full text-left px-3 py-2 text-sm ${
-                selectedCity?.id === city.id 
-                  ? 'bg-red-50 text-red-700 font-semibold' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {city.name[Language]}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  </div>
-</div>
+      </div>
 
       {/* Search Bar */}
       <div className="flex-1 max-w-8xl mr-4 relative" ref={searchRef}>
@@ -970,8 +955,7 @@ export default function NavBanner() {
               className="w-full pl-12 pr-20 py-2 text-sm rounded-full border-gray-300 focus:ring-2 focus:ring-red-500 shadow-sm hover:border-black-400 transition-colors"
             />
             <button 
-              type="button"
-              onClick={handleSearchIconClick}
+              type="submit"
               className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-red-100 text-red-500 hover:bg-red-200 transition-all h-7 w-7 flex items-center justify-center rounded-full shadow-sm"
             >
               <Search className="h-3.5 w-3.5" />
@@ -1061,9 +1045,6 @@ export default function NavBanner() {
           </div>
         )}
       </div>
-
-      {/* Country and City Selectors */}
-     
     </div>
   );
 
