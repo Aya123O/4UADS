@@ -65,7 +65,8 @@ interface SearchResult {
   image_url?: string;
 }
 
-const SEARCH_API = "https://new.4youad.com/api/products/search";
+// FIXED: Removed /search from the endpoint
+const SEARCH_API = "https://new.4youad.com/api/products";
 const CATEGORIES_API = "https://new.4youad.com/api/categories";
 const COUNTRIES_API = "https://new.4youad.com/api/countries";
 const BUSINESS_API = "https://new.4youad.com/api/settings/business";
@@ -241,9 +242,13 @@ export default function NavBanner() {
       }
 
       try {
-        // Changed to GET request with query parameters
+        // FIXED: Use proper URL parameters with URLSearchParams
+        const searchUrl = new URL(SEARCH_API);
+        searchUrl.searchParams.append('search', searchTerm);
+        searchUrl.searchParams.append('lang', Language);
+
         const response = await fetch(
-          `${SEARCH_API}?search=${encodeURIComponent(searchTerm)}&lang=${Language}`,
+          searchUrl.toString(),
           {
             method: 'GET',
             headers: {
