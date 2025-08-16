@@ -9,7 +9,7 @@ import { useLanguage } from '@/Context/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import CategoriesAndListings from '../../../../components/products/CategoriesAndListings';
 
-const SEARCH_API = "https://new.4youad.com/api/products/search";
+const SEARCH_API = "https://new.4youad.com/api/products";
 const HOME_PRODUCTS_API = "https://new.4youad.com/api/homeProducts";
 
 const content = {
@@ -57,16 +57,16 @@ interface SearchResult {
 
 async function getSearchResults(query: string, lang: string): Promise<SearchResult[]> {
   try {
-    // First try the search API
-    const searchResponse = await fetch(SEARCH_API, {
-      method: 'POST',
+    // Fixed: Use URL parameters instead of JSON body for GET request
+    const searchUrl = new URL(SEARCH_API);
+    searchUrl.searchParams.append('search', query);
+    searchUrl.searchParams.append('lang', lang);
+
+    const searchResponse = await fetch(searchUrl.toString(), {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        search: query,
-        lang: lang
-      }),
     });
 
     if (searchResponse.ok) {
@@ -121,12 +121,10 @@ async function getSearchResults(query: string, lang: string): Promise<SearchResu
 
       if (homeData.data && Array.isArray(homeData.data)) {
         homeData.data.forEach((item: any) => {
-          // Add category and its products to the map
           if (item.category) {
             const categoryId = item.category.id;
             const categoryName = item.category.name[lang] || item.category.name.en || item.category.name.ar;
             
-            // Store products for this category
             if (item.products && Array.isArray(item.products)) {
               categoryProductsMap[categoryId] = item.products.map((product: any) => ({
                 ...product,
@@ -134,7 +132,6 @@ async function getSearchResults(query: string, lang: string): Promise<SearchResu
               }));
             }
 
-            // Check if category name matches search query
             if (categoryName.toLowerCase().includes(query.toLowerCase())) {
               results.push({
                 id: categoryId,
@@ -144,7 +141,6 @@ async function getSearchResults(query: string, lang: string): Promise<SearchResu
                 image_url: item.category.icon_url || null
               });
 
-              // Add all products from this category
               if (categoryProductsMap[categoryId]) {
                 categoryProductsMap[categoryId].forEach((product: any) => {
                   results.push({
@@ -168,7 +164,6 @@ async function getSearchResults(query: string, lang: string): Promise<SearchResu
             }
           }
 
-          // Also add individual products that match the query
           if (item.products && Array.isArray(item.products)) {
             item.products.forEach((product: any) => {
               const productName = product.name[lang] || product.name.en || product.name.ar;
@@ -258,7 +253,6 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
       products.forEach(product => {
         const categoryId = product.category_id;
         if (categoryId && categoryMap[categoryId]) {
-          // Safely access the category and push the product
           const categoryItem = categoryMap[categoryId];
           if (categoryItem) {
             categoryItem.products.push({
@@ -279,7 +273,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
         }
       });
       
-      // Also include products without categories
+      // Handle uncategorized products
       const uncategorizedProducts = products.filter(
         product => !product.category_id || !categoryMap[product.category_id]
       ).map(product => ({
@@ -304,7 +298,10 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
           category: {
             id: 0,
             slug: 'uncategorized',
-            name: { en: '', ar: '' },
+            name: { 
+              en: Language === 'en' ? 'Uncategorized' : 'غير مصنف',
+              ar: Language === 'ar' ? 'غير مصنف' : 'Uncategorized'
+            },
             icon_url: null
           },
           products: uncategorizedProducts
@@ -350,10 +347,6 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8" dir={Language === "ar" ? "rtl" : "ltr"}>
-      <div className="max-w-2xl mx-auto mb-8">
-        {/* Search input removed as it wasn't functional in the original code */}
-      </div>
-
       <h1 className="text-2xl font-bold mb-6">
         {currentContent.searchResultsFor}: <span className="text-blue-600">"{query}"</span>
       </h1>
