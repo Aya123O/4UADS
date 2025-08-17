@@ -12,6 +12,14 @@ import { useLanguage } from "../../../Context/LanguageContext";
 
 interface GalleryImage {
   id: number;
+  heading?: {
+    ar?: string;
+    en?: string;
+  };
+  description?: {
+    ar?: string;
+    en?: string;
+  };
   picture_url: string;
 }
 
@@ -52,10 +60,7 @@ export default function CompactCarImportGallery(): JSX.Element {
       <div className="flex justify-center items-center h-[400px] md:h-[500px] overflow-hidden">
         <div className="relative flex flex-col items-center">
           <div className="relative h-10 w-10">
-            {/* Large static inner circle */}
             <div className="absolute inset-0 rounded-full bg-blue-900 m-1"></div>
-            
-            {/* Rotating outer circle */}
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-600 border-r-red-600 animate-spin"></div>
           </div>
           <motion.p 
@@ -70,7 +75,6 @@ export default function CompactCarImportGallery(): JSX.Element {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="flex justify-center items-center h-[400px] ">
@@ -99,7 +103,6 @@ export default function CompactCarImportGallery(): JSX.Element {
     );
   }
 
-  // Empty state
   if (!galleryImages.length) {
     return (
       <div className="flex justify-center items-center h-[400px] bg-gray-900">
@@ -148,7 +151,7 @@ export default function CompactCarImportGallery(): JSX.Element {
         pagination={{
           clickable: true,
           dynamicBullets: true,
-          renderBullet: ( className) => {
+          renderBullet: (className) => {
             return `<span class="${className} !w-2.5 !h-2.5 !bg-white !opacity-50 hover:!opacity-100 !mx-1 !transition-all !duration-300"></span>`;
           },
         }}
@@ -175,10 +178,10 @@ export default function CompactCarImportGallery(): JSX.Element {
           <SwiperSlide key={image.id}>
             <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
               {/* Gradient Overlay */}
-              <div className="absolute inset-0 z-10 "></div>
+              <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 to-transparent"></div>
               
               {/* Reflective Floor Effect */}
-              <div className="absolute bottom-0 left-0 right-0 h-1/4 z-10 "></div>
+              <div className="absolute bottom-0 left-0 right-0 h-1/4 z-10 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
               
               {/* Image with parallax effect */}
               <div 
@@ -198,6 +201,46 @@ export default function CompactCarImportGallery(): JSX.Element {
               
               {/* Light reflection effect */}
               <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-white/10 to-transparent z-10 mix-blend-soft-light"></div>
+              
+              {/* TEXT CONTENT - SIMPLIFIED */}
+              {(image.heading?.[Language] || image.description?.[Language]) && (
+                <div 
+                  className="absolute z-20 bottom-16 md:bottom-20 left-0 right-0 px-4 max-w-4xl mx-auto"
+                  data-swiper-parallax-y="100"
+                  data-swiper-parallax-opacity="0"
+                  data-swiper-parallax-duration="800"
+                >
+                  <div className="relative">
+                    {image.heading?.[Language] && (
+                      <motion.h2 
+                        className="text-white text-2xl md:text-4xl font-bold mb-2 md:mb-3 text-center"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        style={{
+                          textShadow: "0 2px 8px rgba(0,0,0,0.7)",
+                        }}
+                      >
+                        {image.heading[Language]}
+                      </motion.h2>
+                    )}
+                    
+                    {image.description?.[Language] && (
+                      <motion.p 
+                        className="text-white/90 text-center text-base md:text-lg max-w-2xl mx-auto"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        style={{
+                          textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+                        }}
+                      >
+                        {image.description[Language]}
+                      </motion.p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </SwiperSlide>
         ))}

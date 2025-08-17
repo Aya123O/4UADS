@@ -1,25 +1,28 @@
 "use client";
-
-import React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useLanguage } from "@/Context/LanguageContext";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useLanguage } from "../../Context/LanguageContext";
+import { ImageIcon, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
+import Link from "next/link";
 
 interface Product {
   id: number;
   slug: string;
   name: {
     ar: string;
-    en: string;
+    en: string | null;
   };
-  price: number;
-  discount: number;
-  final_price: number;
   quantity: number;
+  phone_number: string;
+  whatsapp_number: string | null;
+  country_id: number;
+  city_id: number;
   picture_url: string | null;
+  price?: number;
+  discount?: number;
+  final_price?: number;
   rating?: number;
   sub_category_slug?: string;
 }
@@ -46,67 +49,133 @@ interface Category {
   sub_categories?: Subcategory[];
 }
 
-interface CategoryWithProducts {
-  category: Category;
-  products: Product[];
+interface Country {
+  id: number;
+  name: {
+    ar: string;
+    en: string;
+  };
+  cities: City[];
 }
 
+interface City {
+  id: number;
+  name: {
+    ar: string;
+    en: string;
+  };
+  country_id: number;
+}
 interface CategoriesAndListingsProps {
-  data?: CategoryWithProducts[] | null;
-  products?: Product[] | null;
+  data: any[]; 
   loading: boolean;
   error: string | null;
-  isSingleCategoryView?: boolean;
-  categoryName?: string;
-  showAllCategories?: boolean;
-  showAllProducts?: boolean;
+  showAllCategories: boolean;
 }
+const PRODUCTS_API = "https://new.4youad.com/api/products";
 
-export default function CategoriesAndListings({
-  data = null,
-  products = null,
-  loading = true,
-  error = null,
-  isSingleCategoryView = false,
-  categoryName = "",
-  showAllCategories = false,
-  showAllProducts = false,
-}: CategoriesAndListingsProps) {
+export default function CategoriesAndListings(_props: CategoriesAndListingsProps) 
+{
   const { Language } = useLanguage();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [categoryName, setCategoryName] = useState<string>("");
+  const [categoryIcon, setCategoryIcon] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const fetchProducts = async (pageNumber = 1, append = false) => {
+    try {
+      if (pageNumber === 1) {
+        setLoading(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+      setError(null);
+      
+      // Get current URL params
+      const countryId = searchParams.get('country_id');
+      const cityId = searchParams.get('city_id');
+      const categorySlug = searchParams.get('category_slug');
+      const subcategorySlug = searchParams.get('subcategory_slug');
+      
+      let apiUrl = PRODUCTS_API;
+      const params = new URLSearchParams();
+      
+      if (countryId) params.append('country_id', countryId);
+      if (cityId) params.append('city_id', cityId);
+      if (categorySlug) params.append('category_slug', categorySlug);
+      if (subcategorySlug) params.append('subcategory_slug', subcategorySlug);
+      params.append('page', pageNumber.toString());
+      
+      apiUrl += `?${params.toString()}`;
+
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const newProducts = data.data?.data || [];
+
+      if (append) {
+        setProducts(prev => [...prev, ...newProducts]);
+      } else {
+        setProducts(newProducts);
+      }
+
+      // Check if there are more products
+      setHasMore(newProducts.length >= 10); 
+
+      // Set category name if available
+      if (data.data?.category_name) {
+        setCategoryName(data.data.category_name[Language] || data.data.category_name.ar || "");
+      }
+      if (data.data?.category_icon) {
+        setCategoryIcon(data.data.category_icon);
+      }
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      setError("Failed to load products. Please try again later.");
+      setProducts([]);
+    } finally {
+      setLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    setPage(1);
+    fetchProducts(1);
+  }, [searchParams, Language]);
+
+  const loadMoreProducts = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchProducts(nextPage, true);
+  };
 
   const navigateToProduct = (slug: string) => {
     router.push(`/ad/${slug}`);
   };
 
-  const navigateToCategory = (categorySlug: string, subcategorySlug?: string) => {
-    if (subcategorySlug) {
-      router.push(`/products?category_slug=${encodeURIComponent(categorySlug)}&subcategory_slug=${encodeURIComponent(subcategorySlug)}`);
-    } else {
-      router.push(`/products?category_slug=${encodeURIComponent(categorySlug)}`);
-    }
-  };
-
   const renderStars = (rating = 0) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
-    for (let i = 1; i <= 5; i++) {
-      if (i <= fullStars) {
-        stars.push(<Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />);
-      } else if (i === fullStars + 1 && hasHalfStar) {
-        stars.push(<Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />);
-      } else {
-        stars.push(<Star key={i} className="w-4 h-4 text-gray-300" />);
-      }
-    }
-
-    return stars;
+    return Array(5).fill(0).map((_, i) => (
+      <Star
+        key={i}
+        className={`w-4 h-4 ${
+          i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+        }`}
+      />
+    ));
   };
 
   const ProductCard = ({ product }: { product: Product }) => {
-    const [imageError, setImageError] = React.useState(false);
+    const [imageError, setImageError] = useState(false);
     const hasImage = product.picture_url && !imageError;
 
     return (
@@ -116,30 +185,21 @@ export default function CategoriesAndListings({
         role="button"
         tabIndex={0}
         onKeyDown={(e) => e.key === 'Enter' && navigateToProduct(product.slug)}
-        aria-label={`View ${product.name[Language]} details`}
+        aria-label={product.name[Language] || 'Product'}
       >
         <div className="relative aspect-square overflow-hidden flex-shrink-0">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
           {hasImage ? (
             <img
-              src={product.picture_url ?? ""}
-              alt={product.name[Language]}
+              src={product.picture_url ?? undefined}
+              alt={product.name[Language] ?? product.name.ar ?? "Product"}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               loading="lazy"
               onError={() => setImageError(true)}
             />
           ) : (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-              <img 
-                src="../assets/images/default.png" 
-                alt={product.name[Language]} 
-                className="object-cover w-full h-full"
-              />
-            </div>
-          )}
-          {product.discount > 0 && (
-            <div className="absolute top-3 right-3 bg-gradient-to-r from-red-600 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm z-20">
-              {Language === "ar" ? "خصم" : "Sale"} {product.discount}%
+              <ImageIcon className="w-12 h-12 text-gray-400" />
             </div>
           )}
         </div>
@@ -147,16 +207,29 @@ export default function CategoriesAndListings({
         <div className="p-4 flex flex-col flex-grow">
           <div className="flex flex-col sm:flex-row sm:justify-between items-start mb-3 gap-2 sm:gap-0">
             <h3 className="font-bold text-gray-900 line-clamp-2 text-lg flex-grow">
-              {product.name[Language]}
+              {product.name[Language] || product.name.ar || 'Unnamed Product'}
             </h3>
           </div>
 
           {product.rating && (
-            <div className="flex items-center gap-1 mb-4">
+            <div className="flex items-center mb-2">
               {renderStars(product.rating)}
-              <span className="text-xs text-gray-500 ml-1">
+              <span className="text-sm text-gray-500 ml-1">
                 ({product.rating.toFixed(1)})
               </span>
+            </div>
+          )}
+
+          {product.final_price && (
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-lg text-red-600">
+                ${product.final_price.toFixed(2)}
+              </span>
+              {product.discount && product.discount > 0 && (
+                <span className="text-sm text-gray-500 line-through">
+                  ${product.price?.toFixed(2)}
+                </span>
+              )}
             </div>
           )}
 
@@ -179,30 +252,37 @@ export default function CategoriesAndListings({
     );
   };
 
+  const renderLocationFilter = () => {
+    const countryId = searchParams.get('country_id');
+    const cityId = searchParams.get('city_id');
+    
+    if (!countryId && !cityId) return null;
+
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 gap-10">
-          {[1, 2, 3].map((category) => (
-            <div key={category} className="space-y-8">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-10 w-56 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
-                <Skeleton className="h-8 w-28 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {[1, 2, 3, 4].map((product) => (
-                  <div key={product} className="space-y-4 group">
-                    <Skeleton className="h-60 w-full rounded-2xl bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 group-hover:opacity-90 transition-opacity" />
-                    <div className="space-y-3">
-                      <Skeleton className="h-6 w-3/4 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
-                      <Skeleton className="h-5 w-1/2 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
-                      <Skeleton className="h-4 w-full rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="space-y-8">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-10 w-56 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
+              <Skeleton className="h-8 w-28 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
             </div>
-          ))}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {[1, 2, 3, 4].map((product) => (
+                <div key={product} className="space-y-4 group">
+                  <Skeleton className="h-60 w-full rounded-2xl bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200 group-hover:opacity-90 transition-opacity" />
+                  <div className="space-y-3">
+                    <Skeleton className="h-6 w-3/4 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
+                    <Skeleton className="h-5 w-1/2 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
+                    <Skeleton className="h-4 w-full rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -210,380 +290,125 @@ export default function CategoriesAndListings({
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <div className="inline-block bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-600 px-6 py-4 rounded-xl shadow-sm">
-          <div className="font-bold text-lg mb-1">{Language === "ar" ? "خطأ" : "Error"}</div>
-          <div>{error}</div>
+      <div className="container mx-auto px-4 py-8 text-center">
+        <div className="inline-block bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-lg">
+          {error}
+          <Button 
+            variant="ghost" 
+            className="ml-2 text-red-600"
+            onClick={() => window.location.reload()}
+          >
+            {Language === "ar" ? "إعادة المحاولة" : "Try Again"}
+          </Button>
         </div>
       </div>
     );
   }
 
-  if (isSingleCategoryView) {
+  const countryId = searchParams.get('country_id');
+  const cityId = searchParams.get('city_id');
+  const categorySlug = searchParams.get('category_slug');
+
+  if (products.length === 0) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12" dir={Language === "ar" ? "rtl" : "ltr"}>
-        <section className="mb-16">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
-              {categoryName || (Language === "ar" ? "المنتجات" : "Products")}
-            </h2>
-            <Link
-              href="/products"
-              className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium transition-colors group"
-            >
-              {Language === "ar" ? (
-                <>
-                  رجوع <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                </>
-              ) : (
-                <>
-                  Go Back <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </Link>
-          </div>
-
-          {products && products.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {products.map((product, index) => (
-                <ProductCard key={index} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="inline-block bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 text-gray-700 px-8 py-8 rounded-2xl shadow-sm max-w-md w-full">
-                <div className="flex justify-center mb-4">
-                  <ImageIcon className="w-12 h-12 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">
-                  {Language === "ar" ? "لا توجد منتجات متاحة" : "No products available"}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {Language === "ar" 
-                    ? "لا توجد منتجات متاحة حاليًا في هذه الفئة. يرجى التحقق مرة أخرى لاحقًا." 
-                    : "There are currently no products available in this category. Please check back later."}
-                </p>
-                <Link href="/products">
-                  <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                    {Language === "ar" ? "تصفح جميع المنتجات" : "Browse all products"}
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
-    );
-  }
-
-  if (showAllProducts && data) {
-    const allProducts = data.flatMap(categoryWithProducts => categoryWithProducts.products);
-    
-    return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12" dir={Language === "ar" ? "rtl" : "ltr"}>
-        <section className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
-              {Language === "ar" ? "جميع المنتجات" : "All Products"}
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-red-500 to-orange-400 mx-auto rounded-full"></div>
-          </div>
-
-          {allProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {allProducts.map((product, index) => (
-                <ProductCard key={index} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="inline-block bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 text-gray-700 px-8 py-8 rounded-2xl shadow-sm max-w-md w-full">
-                <div className="flex justify-center mb-4">
-                  <ImageIcon className="w-12 h-12 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">
-                  {Language === "ar" ? "لا توجد منتجات متاحة" : "No products available"}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {Language === "ar" 
-                    ? "لا توجد منتجات متاحة حاليًا. يرجى التحقق مرة أخرى لاحقًا." 
-                    : "There are currently no products available. Please check back later."}
-                </p>
-                <Link href="/products">
-                  <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                    {Language === "ar" ? "تصفح الفئات" : "Browse categories"}
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
-    );
-  }
-
-  if (showAllCategories && data) {
-    return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12" dir={Language === "ar" ? "rtl" : "ltr"}>
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
-            {Language === "ar" ? "جميع الفئات والمنتجات" : "All Categories & Products"}
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            {Language === "ar" 
-              ? "استكشف مجموعتنا الكاملة من الفئات والمنتجات المميزة" 
-              : "Explore our complete collection of featured categories and products"}
+      <div className="container mx-auto px-4 py-8 text-center">
+        <div className="inline-block bg-gray-50 border border-gray-200 text-gray-700 px-8 py-8 rounded-lg max-w-md">
+          <ImageIcon className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-xl font-bold mb-2">
+            {Language === "ar" ? "لا توجد منتجات متاحة" : "No products available"}
+          </h3>
+          <p className="text-gray-500 mb-4">
+            {countryId || cityId
+              ? Language === "ar"
+                ? "لا توجد منتجات متاحة حاليًا في الموقع المحدد."
+                : "No products available in the selected location."
+              : Language === "ar"
+                ? "لا توجد منتجات متاحة حاليًا."
+                : "No products available currently."}
           </p>
-          <div className="w-32 h-1 bg-gradient-to-r from-red-500 to-orange-400 mx-auto mt-6 rounded-full"></div>
+          {(countryId || cityId) && (
+            <Button 
+              variant="outline" 
+              className="text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.delete('country_id');
+                params.delete('city_id');
+                router.push(`/?${params.toString()}`);
+              }}
+            >
+              {Language === "ar" ? "إزالة الفلتر" : "Remove filter"}
+            </Button>
+          )}
         </div>
-        
-        {data.length > 0 ? (
-          data.map((categoryWithProducts, categoryIndex) => (
-            <section key={categoryIndex} className="mb-16 last:mb-0">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                <div className="flex items-center gap-4">
-                  {categoryWithProducts.category.icon_url && (
-                    <div className="p-3 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl shadow-sm">
-                      <img
-                        src={categoryWithProducts.category.icon_url}
-                        alt={categoryWithProducts.category.name[Language]}
-                        className="w-8 h-8 object-contain"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null;
-                          target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {categoryWithProducts.category.name[Language]}
-                  </h2>
-                </div>
-                {categoryWithProducts.category.sub_categories?.length ? (
-                  <div className="flex flex-wrap gap-2">
-                    {categoryWithProducts.category.sub_categories.map((subcategory) => (
-                      <Button
-                        key={subcategory.id}
-                        variant="ghost"
-                        className="flex items-center gap-1 text-red-600 hover:text-red-700 font-medium transition-colors group"
-                        onClick={() => navigateToCategory(categoryWithProducts.category.slug, subcategory.slug)}
-                      >
-                        {subcategory.name[Language]}
-                        {Language === "ar" ? (
-                          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <Link href={`/products?category_slug=${categoryWithProducts.category.slug}`} passHref>
-                    <Button
-                      variant="ghost"
-                      className="flex items-center gap-1 text-red-600 hover:text-red-700 font-medium transition-colors group"
-                    >
-                      {Language === "ar" ? (
-                        <>
-                          عرض المزيد <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        </>
-                      ) : (
-                        <>
-                          View More <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                    </Button>
-                  </Link>
-                )}
-              </div>
-
-              {categoryWithProducts.products.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {categoryWithProducts.products.map((product, index) => (
-                    <ProductCard key={index} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="inline-block bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 text-gray-700 px-6 py-6 rounded-xl shadow-sm w-full">
-                    <div className="flex justify-center mb-3">
-                      <ImageIcon className="w-10 h-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-bold mb-1">
-                      {Language === "ar" ? "لا توجد منتجات متاحة" : "No products available"}
-                    </h3>
-                    <p className="text-gray-500 text-sm">
-                      {Language === "ar" 
-                        ? "لا توجد منتجات متاحة حاليًا في هذه الفئة." 
-                        : "There are currently no products available in this category."}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </section>
-          ))
-        ) : (
-          <div className="text-center py-12">
-            <div className="inline-block bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 text-gray-700 px-8 py-8 rounded-2xl shadow-sm max-w-md w-full">
-              <div className="flex justify-center mb-4">
-                <ImageIcon className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">
-                {Language === "ar" ? "لا توجد فئات متاحة" : "No categories available"}
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {Language === "ar" 
-                  ? "لا توجد فئات متاحة حاليًا. يرجى التحقق مرة أخرى لاحقًا." 
-                  : "There are currently no categories available. Please check back later."}
-              </p>
-              <Link href="/">
-                <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                  {Language === "ar" ? "العودة للصفحة الرئيسية" : "Return to homepage"}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (data) {
-    return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12" dir={Language === "ar" ? "rtl" : "ltr"}>
-        {data.length > 0 ? (
-          data.map((categoryWithProducts, categoryIndex) => (
-            <section key={categoryIndex} className="mb-16 last:mb-0">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                <div className="flex items-center gap-4">
-                  {categoryWithProducts.category.icon_url && (
-                    <div className="p-3 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl shadow-sm">
-                      <img
-                        src={categoryWithProducts.category.icon_url}
-                        alt={categoryWithProducts.category.name[Language]}
-                        className="w-8 h-8 object-contain"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null;
-                          target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {categoryWithProducts.category.name[Language]}
-                  </h2>
-                </div>
-                {categoryWithProducts.category.sub_categories?.length ? (
-                  <div className="flex flex-wrap gap-2">
-                    {categoryWithProducts.category.sub_categories.map((subcategory) => (
-                      <Button
-                        key={subcategory.id}
-                        variant="ghost"
-                        className="flex items-center gap-1 text-red-600 hover:text-red-700 font-medium transition-colors group"
-                        onClick={() => navigateToCategory(categoryWithProducts.category.slug, subcategory.slug)}
-                      >
-                        {subcategory.name[Language]}
-                        {Language === "ar" ? (
-                          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <Link href={`/products?category_slug=${categoryWithProducts.category.slug}`} passHref>
-                    <Button
-                      variant="ghost"
-                      className="flex items-center gap-1 text-red-600 hover:text-red-700 font-medium transition-colors group"
-                    >
-                      {Language === "ar" ? (
-                        <>
-                          عرض المزيد <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        </>
-                      ) : (
-                        <>
-                          View More <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                    </Button>
-                  </Link>
-                )}
-              </div>
-
-              {categoryWithProducts.products.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {categoryWithProducts.products.map((product, index) => (
-                    <ProductCard key={index} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="inline-block bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 text-gray-700 px-6 py-6 rounded-xl shadow-sm w-full">
-                    <div className="flex justify-center mb-3">
-                      <ImageIcon className="w-10 h-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-bold mb-1">
-                      {Language === "ar" ? "لا توجد منتجات متاحة" : "No products available"}
-                    </h3>
-                    <p className="text-gray-500 text-sm">
-                      {Language === "ar" 
-                        ? "لا توجد منتجات متاحة حاليًا في هذه الفئة." 
-                        : "There are currently no products available in this category."}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </section>
-          ))
-        ) : (
-          <div className="text-center py-12">
-            <div className="inline-block bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 text-gray-700 px-8 py-8 rounded-2xl shadow-sm max-w-md w-full">
-              <div className="flex justify-center mb-4">
-                <ImageIcon className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">
-                {Language === "ar" ? "لا توجد فئات متاحة" : "No categories available"}
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {Language === "ar" 
-                  ? "لا توجد فئات متاحة حاليًا. يرجى التحقق مرة أخرى لاحقًا." 
-                  : "There are currently no categories available. Please check back later."}
-              </p>
-              <Link href="/">
-                <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                  {Language === "ar" ? "العودة للصفحة الرئيسية" : "Return to homepage"}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-      <div className="inline-block bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 text-gray-700 px-8 py-8 rounded-2xl shadow-sm max-w-md w-full">
-        <div className="flex justify-center mb-4">
-          <ImageIcon className="w-12 h-12 text-gray-400" />
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12" dir={Language === "ar" ? "rtl" : "ltr"}>
+      {renderLocationFilter()}
+
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-4">
+          {categoryIcon && (
+            <div className="p-3 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl shadow-sm">
+              <img
+                src={categoryIcon}
+                alt={categoryName}
+                className="w-8 h-8 object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+          <h2 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">
+            {categoryName || (Language === "ar" ? "المنتجات" : "Products")}
+          </h2>
         </div>
-        <h3 className="text-xl font-bold mb-2">
-          {Language === "ar" ? "لا توجد بيانات متاحة" : "No data available"}
-        </h3>
-        <p className="text-gray-500 mb-4">
-          {Language === "ar" 
-            ? "لا توجد بيانات متاحة حاليًا. يرجى التحقق مرة أخرى لاحقًا." 
-            : "There is currently no data available. Please check back later."}
-        </p>
-        <Link href="/">
-          <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-            {Language === "ar" ? "العودة للصفحة الرئيسية" : "Return to homepage"}
-          </Button>
-        </Link>
+        {categorySlug && (
+          <Link
+            href="/products"
+            className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium transition-colors group"
+          >
+            {Language === "ar" ? (
+              <>
+                رجوع <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              </>
+            ) : (
+              <>
+                Go Back <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </Link>
+        )}
       </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+
+      {hasMore && (
+        <div className="mt-10 text-center">
+          <Button
+            variant="outline"
+            className="border-red-200 text-red-600 hover:bg-red-50 px-8 py-4 text-lg"
+            onClick={loadMoreProducts}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? (
+              <span>{Language === "ar" ? "جاري التحميل..." : "Loading..."}</span>
+            ) : (
+              <span>{Language === "ar" ? "عرض المزيد" : "View More"}</span>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

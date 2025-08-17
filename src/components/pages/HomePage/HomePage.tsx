@@ -60,7 +60,7 @@ export default function HomePage() {
       </div>
       <div className="max-w-full">
         <CategoriesAndListings 
-          data={data}
+          data={data ?? []}
           loading={loading}
           error={error}
           showAllCategories={true}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapPin, Phone, MessageCircle, Star, ChevronLeft, ChevronRight, Share2, Heart, Link, Clock, Eye, Plus, Minus, ShoppingCart } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Star, ChevronLeft, ChevronRight, Share2, Heart, Link, Clock, Eye, Plus, Minus, ShoppingCart, User } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -92,6 +92,7 @@ interface Product {
   };
   customer: {
     id: number;
+    slug: string; // Added slug property
     name: string;
     phone: string;
     email: string;
@@ -167,7 +168,6 @@ interface CartItem {
   specName: string;
   specDetail: string;
   color?: string;
-  // Added fields for all product data
   fullProductData: {
     product: Product;
     selectedPriceId: number;
@@ -215,14 +215,12 @@ export default function ProductDetails() {
           if (result.data) {
             setProduct(result.data);
             
-            // Initialize quantities for each price
             const initialQuantities: {[key: number]: number} = {};
             result.data.prices.forEach((price) => {
               initialQuantities[price.id] = 1;
             });
             setQuantities(initialQuantities);
             
-            // Initialize selected specs with first option for each specification
             const initialSpecs: SelectedSpecs = {};
             result.data.product_specifications.forEach((spec) => {
               if (spec.details && spec.details.length > 0) {
@@ -297,7 +295,6 @@ export default function ProductDetails() {
   const addToCart = (price: any) => {
     if (!product) return;
     
-    // Create cart item with all product data
     const cartItem: CartItem = {
       id: Date.now(),
       productId: product.id,
@@ -309,7 +306,6 @@ export default function ProductDetails() {
       specName: price.specification?.name[Language] || '',
       specDetail: price.specification_detail?.name[Language] || '',
       color: selectedColors[price.id],
-      // Include full product data
       fullProductData: {
         product: product,
         selectedPriceId: price.id
@@ -317,8 +313,6 @@ export default function ProductDetails() {
     };
 
     const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
-    // Check if this exact item already exists in cart
     const existingItemIndex = existingCart.findIndex((item: CartItem) => 
       item.productId === cartItem.productId && 
       item.specName === cartItem.specName &&
@@ -326,10 +320,8 @@ export default function ProductDetails() {
     );
 
     if (existingItemIndex !== -1) {
-      // Update quantity of existing item
       existingCart[existingItemIndex].quantity += cartItem.quantity;
     } else {
-      // Add new item
       existingCart.push(cartItem);
     }
 
@@ -389,7 +381,6 @@ export default function ProductDetails() {
     );
   };
 
-  // Parse JSON strings from API
   const parsedSpecifications = product ? JSON.parse(product.specifications || '[]') : [];
   const parsedComplementaries = product ? JSON.parse(product.complementaries || '[]') : [];
   const parsedAttributes = product ? JSON.parse(product.attributes || '[]') : [];
@@ -398,7 +389,6 @@ export default function ProductDetails() {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Image Gallery Skeleton */}
           <div className="space-y-6">
             <Skeleton className="aspect-square w-full rounded-3xl" />
             <div className="grid grid-cols-4 gap-4">
@@ -408,7 +398,6 @@ export default function ProductDetails() {
             </div>
           </div>
           
-          {/* Product Info Skeleton */}
           <div className="space-y-8">
             <div className="space-y-4">
               <Skeleton className="h-10 w-3/4 rounded-lg" />
@@ -481,9 +470,6 @@ export default function ProductDetails() {
       className="container mx-auto px-4 sm:px-6 lg:px-8 py-12"
       dir={Language === "ar" ? "rtl" : "ltr"}
     >
-      
-    
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Image Gallery */}
         <div className="space-y-6">
@@ -498,7 +484,6 @@ export default function ProductDetails() {
               quality={100}
             />
             
-            {/* Floating badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2">
               {product.prices.some(p => p.discount > 0) && (
                 <div className="bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
@@ -520,13 +505,10 @@ export default function ProductDetails() {
               />
             </button>
             
-            {/* Floating share button */}
             <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110">
               <Share2 className="w-6 h-6 text-gray-600" />
             </button>
           </div>
-          
-        
         </div>
 
         {/* Product Info */}
@@ -879,6 +861,20 @@ export default function ProductDetails() {
               </div>
               
               <div className="flex-1 p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <h4 className="text-xl font-bold">{product.customer.name}</h4>
+                  {product.customer.slug && (
+                    <Button 
+                      variant="outline"
+                      className="bg-red-50 text-red-600 hover:bg-red-100"
+                      onClick={() => router.push(`/profile/${product.customer.slug}`)}
+                    >
+                      <User className={`w-4 h-4 ${Language === "ar" ? "ml-2" : "mr-2"}`} />
+                      {Language === "ar" ? "الصفحة الشخصية" : "Your Profile"}
+                    </Button>
+                  )}
+                </div>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <h5 className="text-sm font-medium text-gray-500 mb-2">
