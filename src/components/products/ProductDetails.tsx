@@ -167,6 +167,8 @@ interface CartItem {
   slug: string;
   specName: string;
   specDetail: string;
+  specification_id?: number | null;
+  specification_detail_id?: number | null;
   color?: string;
   fullProductData: {
     product: Product;
@@ -305,6 +307,8 @@ export default function ProductDetails() {
       slug: product.slug,
       specName: price.specification?.name[Language] || '',
       specDetail: price.specification_detail?.name[Language] || '',
+      specification_id: price.specification_id, // Add this
+      specification_detail_id: price.specification_detail_id,
       color: selectedColors[price.id],
       fullProductData: {
         product: product,
@@ -314,10 +318,10 @@ export default function ProductDetails() {
 
     const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
     const existingItemIndex = existingCart.findIndex((item: CartItem) => 
-      item.productId === cartItem.productId && 
-      item.specName === cartItem.specName &&
-      item.specDetail === cartItem.specDetail
-    );
+  item.productId === cartItem.productId && 
+  item.specification_id === cartItem.specification_id &&
+  item.specification_detail_id === cartItem.specification_detail_id
+);
 
     if (existingItemIndex !== -1) {
       existingCart[existingItemIndex].quantity += cartItem.quantity;
