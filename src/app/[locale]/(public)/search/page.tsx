@@ -7,10 +7,9 @@ import { Search, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/Context/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import CategoriesAndListings from '../../../../components/products/CategoriesAndListings';
-
-const SEARCH_API = "https://new.4youad.com/api/products";
-const HOME_PRODUCTS_API = "https://new.4youad.com/api/homeProducts";
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const content = {
   ar: {
@@ -19,6 +18,11 @@ const content = {
     allProducts: "جميع المنتجات",
     searchResultsFor: "نتائج البحث عن",
     productsInCategory: "منتجات في فئة",
+    price: "السعر",
+    discount: "خصم",
+    finalPrice: "السعر النهائي",
+    viewDetails: "عرض التفاصيل",
+    uncategorized: "غير مصنف"
   },
   en: {
     searchPlaceholder: "Search for cars, makes, models...",
@@ -26,6 +30,11 @@ const content = {
     allProducts: "All Products",
     searchResultsFor: "Search results for",
     productsInCategory: "Products in category",
+    price: "Price",
+    discount: "Discount",
+    finalPrice: "Final Price",
+    viewDetails: "View Details",
+    uncategorized: "Uncategorized"
   }
 };
 
@@ -39,293 +48,162 @@ interface SearchResult {
   price?: number;
   discount?: number;
   final_price?: number;
-  quantity?: number;
-  description?: {
-    ar: string;
-    en: string;
-  };
-  customer?: {
-    id: number;
-    name: string;
-    phone: string;
-    email: string;
-    picture_url: string;
-  };
-  created_at?: string;
-  views?: number;
 }
 
-async function getSearchResults(query: string, lang: string): Promise<SearchResult[]> {
+async function fetchSearchResults(query: string, lang: string, countryId?: string, cityId?: string): Promise<SearchResult[]> {
   try {
-    // Fixed: Use URL parameters instead of JSON body for GET request
-    const searchUrl = new URL(SEARCH_API);
+    const searchUrl = new URL("https://new.4youad.com/api/products");
     searchUrl.searchParams.append('search', query);
     searchUrl.searchParams.append('lang', lang);
 
-    const searchResponse = await fetch(searchUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (searchResponse.ok) {
-      const searchData = await searchResponse.json();
-      
-      const results: SearchResult[] = [];
-      
-      if (searchData.data?.categories && Array.isArray(searchData.data.categories)) {
-        searchData.data.categories.forEach((category: any) => {
-          results.push({
-            id: category.id,
-            name: category.name[lang] || category.name.en || category.name.ar || 'Unnamed Category',
-            slug: category.slug,
-            type: 'category',
-            image_url: category.icon_url || null
-          });
-        });
-      }
-      
-      if (searchData.data?.products && Array.isArray(searchData.data.products)) {
-        searchData.data.products.forEach((product: any) => {
-          results.push({
-            id: product.id,
-            name: product.name[lang] || product.name.en || product.name.ar || 'Unnamed Product',
-            slug: product.slug,
-            type: 'product',
-            image_url: product.main_image_url || null,
-            category_id: product.category_id,
-            price: product.price,
-            discount: product.discount,
-            final_price: product.final_price,
-            quantity: product.quantity,
-            description: product.description,
-            customer: product.customer,
-            created_at: product.created_at,
-            views: product.views
-          });
-        });
-      }
-
-      if (results.length > 0) {
-        return results;
-      }
+    if (countryId) {
+      searchUrl.searchParams.append('country_id', countryId);
+    }
+    if (cityId) {
+      searchUrl.searchParams.append('city_id', cityId);
     }
 
-    // If search API returns no results, try the homeProducts API
-    const homeResponse = await fetch(HOME_PRODUCTS_API);
-    if (homeResponse.ok) {
-      const homeData = await homeResponse.json();
-      const results: SearchResult[] = [];
-      const categoryProductsMap: Record<number, any[]> = {};
-
-      if (homeData.data && Array.isArray(homeData.data)) {
-        homeData.data.forEach((item: any) => {
-          if (item.category) {
-            const categoryId = item.category.id;
-            const categoryName = item.category.name[lang] || item.category.name.en || item.category.name.ar;
-            
-            if (item.products && Array.isArray(item.products)) {
-              categoryProductsMap[categoryId] = item.products.map((product: any) => ({
-                ...product,
-                category_id: categoryId
-              }));
-            }
-
-            if (categoryName.toLowerCase().includes(query.toLowerCase())) {
-              results.push({
-                id: categoryId,
-                name: categoryName,
-                slug: item.category.slug,
-                type: 'category',
-                image_url: item.category.icon_url || null
-              });
-
-              if (categoryProductsMap[categoryId]) {
-                categoryProductsMap[categoryId].forEach((product: any) => {
-                  results.push({
-                    id: product.id,
-                    name: product.name[lang] || product.name.en || product.name.ar,
-                    slug: product.slug,
-                    type: 'product',
-                    image_url: product.picture_url || null,
-                    category_id: categoryId,
-                    price: product.price,
-                    discount: product.discount,
-                    final_price: product.final_price,
-                    quantity: product.quantity,
-                    description: product.description,
-                    customer: product.customer,
-                    created_at: product.created_at,
-                    views: product.views
-                  });
-                });
-              }
-            }
-          }
-
-          if (item.products && Array.isArray(item.products)) {
-            item.products.forEach((product: any) => {
-              const productName = product.name[lang] || product.name.en || product.name.ar;
-              if (productName.toLowerCase().includes(query.toLowerCase())) {
-                results.push({
-                  id: product.id,
-                  name: productName,
-                  slug: product.slug,
-                  type: 'product',
-                  image_url: product.picture_url || null,
-                  category_id: product.category_id,
-                  price: product.price,
-                  discount: product.discount,
-                  final_price: product.final_price,
-                  quantity: product.quantity,
-                  description: product.description,
-                  customer: product.customer,
-                  created_at: product.created_at,
-                  views: product.views
-                });
-              }
-            });
-          }
-        });
-      }
-
-      return results;
+    const response = await fetch(searchUrl.toString());
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return [];
+    const data = await response.json();
+    
+    const results: SearchResult[] = [];
+    
+    if (data.data?.categories) {
+      data.data.categories.forEach((category: any) => {
+        results.push({
+          id: category.id,
+          name: category.name[lang] || category.name.en || category.name.ar || 'Unnamed Category',
+          slug: category.slug,
+          type: 'category',
+          image_url: category.icon_url || null
+        });
+      });
+    }
+    
+    // Handle products
+    if (data.data?.products) {
+      data.data.products.forEach((product: any) => {
+        results.push({
+          id: product.id,
+          name: product.name[lang] || product.name.en || product.name.ar || 'Unnamed Product',
+          slug: product.slug,
+          type: 'product',
+          image_url: product.main_image_url || null,
+          category_id: product.category_id,
+          price: product.price,
+          discount: product.discount,
+          final_price: product.final_price
+        });
+      });
+    }
+
+    return results;
   } catch (error) {
     console.error("Error fetching search results:", error);
     return [];
   }
 }
 
-interface SearchPageProps {
-  searchParams: {
-    q: string;
-  };
-}
-
-interface CategoryMapItem {
-  category: {
-    id: number;
-    slug: string;
-    name: { en: string; ar: string };
-    icon_url: string | null;
-  };
-  products: any[];
-}
-
-export default function SearchPage({ searchParams }: SearchPageProps) {
+export default function SearchPage() {
   const { Language } = useLanguage();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const currentContent = content[Language];
-  const query = searchParams.q || '';
+  
+const query = decodeURIComponent(searchParams.get('q') || '');  const countryId = searchParams.get('country_id') || undefined;
+  const cityId = searchParams.get('city_id') || undefined;
+  
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchResults, setSearchResults] = React.useState<SearchResult[]>([]);
-  const [categoryProductsData, setCategoryProductsData] = React.useState<any[]>([]);
+  const [searchInput, setSearchInput] = React.useState(query);
 
   React.useEffect(() => {
-    async function fetchResults() {
+    const fetchResults = async () => {
       setIsLoading(true);
-      const results = await getSearchResults(query, Language);
-      setSearchResults(results);
-      
-      // Transform results into the format expected by CategoriesAndListings
-      const categories = results.filter(r => r.type === 'category');
-      const products = results.filter(r => r.type === 'product');
-      
-      // Group products by category
-      const categoryMap: Record<number, CategoryMapItem> = {};
-      categories.forEach(category => {
-        const categoryId = Number(category.id);
-        categoryMap[categoryId] = {
-          category: {
-            id: categoryId,
-            slug: category.slug,
-            name: { en: category.name, ar: category.name },
-            icon_url: category.image_url
-          },
-          products: []
-        };
-      });
-      
-      // Add products to their categories
-      products.forEach(product => {
-        const categoryId = product.category_id;
-        if (categoryId && categoryMap[categoryId]) {
-          const categoryItem = categoryMap[categoryId];
-          if (categoryItem) {
-            categoryItem.products.push({
-              id: product.id,
-              slug: product.slug,
-              name: { en: product.name, ar: product.name },
-              price: product.price,
-              discount: product.discount,
-              final_price: product.final_price,
-              quantity: product.quantity,
-              picture_url: product.image_url,
-              description: product.description,
-              customer: product.customer,
-              created_at: product.created_at,
-              views: product.views
-            });
-          }
-        }
-      });
-      
-      // Handle uncategorized products
-      const uncategorizedProducts = products.filter(
-        product => !product.category_id || !categoryMap[product.category_id]
-      ).map(product => ({
-        id: product.id,
-        slug: product.slug,
-        name: { en: product.name, ar: product.name },
-        price: product.price,
-        discount: product.discount,
-        final_price: product.final_price,
-        quantity: product.quantity,
-        picture_url: product.image_url,
-        description: product.description,
-        customer: product.customer,
-        created_at: product.created_at,
-        views: product.views
-      }));
-      
-      // Create the final data structure
-      const finalData = Object.values(categoryMap);
-      if (uncategorizedProducts.length > 0) {
-        finalData.push({
-          category: {
-            id: 0,
-            slug: 'uncategorized',
-            name: { 
-              en: Language === 'en' ? 'Uncategorized' : 'غير مصنف',
-              ar: Language === 'ar' ? 'غير مصنف' : 'Uncategorized'
-            },
-            icon_url: null
-          },
-          products: uncategorizedProducts
-        });
+      try {
+        const results = await fetchSearchResults(query, Language, countryId, cityId);
+        setSearchResults(results);
+      } catch (error) {
+        console.error("Failed to fetch search results:", error);
+        setSearchResults([]);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setCategoryProductsData(finalData);
+    };
+
+    if (query.trim()) {
+      fetchResults();
+    } else {
+      setSearchResults([]);
       setIsLoading(false);
     }
+  }, [query, Language, countryId, cityId]);
+
+  // Group results by category
+  const groupedResults = React.useMemo(() => {
+    const categories = searchResults.filter(r => r.type === 'category');
+    const products = searchResults.filter(r => r.type === 'product');
     
-    fetchResults();
-  }, [query, Language]);
+    const categoryMap: Record<number, { category: SearchResult, products: SearchResult[] }> = {};
+    
+    // Add all categories to the map
+    categories.forEach(category => {
+      categoryMap[Number(category.id)] = {
+        category,
+        products: []
+      };
+    });
+    
+    // Add products to their categories
+    products.forEach(product => {
+      if (product.category_id && categoryMap[product.category_id]) {
+        categoryMap[product.category_id]?.products.push(product);
+      } else {
+        if (!categoryMap[0]) {
+          categoryMap[0] = {
+            category: {
+              id: 0,
+              name: currentContent.uncategorized,
+              slug: 'uncategorized',
+              type: 'category',
+              image_url: null
+            },
+            products: []
+          };
+        }
+        categoryMap[0].products.push(product);
+      }
+    });
+    
+    return Object.values(categoryMap);
+  }, [searchResults, currentContent.uncategorized]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchInput.trim()) {
+      const params = new URLSearchParams();
+      params.append('q', searchInput.trim());
+      
+      if (countryId) {
+        params.append('country_id', countryId);
+      }
+      if (cityId) {
+        params.append('city_id', cityId);
+      }
+      
+      router.push(`/search?${params.toString()}`);
+    }
+  };
 
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8" dir={Language === "ar" ? "rtl" : "ltr"}>
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="relative">
-            <Skeleton className="w-full h-12 rounded-full" />
-            <Skeleton className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 rounded-full" />
-            <Skeleton className="absolute right-1 top-1/2 transform -translate-y-1/2 w-20 h-8 rounded-full" />
-          </div>
-        </div>
-
+       
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((item) => (
             <div key={item} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -347,6 +225,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8" dir={Language === "ar" ? "rtl" : "ltr"}>
+     
       <h1 className="text-2xl font-bold mb-6">
         {currentContent.searchResultsFor}: <span className="text-blue-600">"{query}"</span>
       </h1>
@@ -356,12 +235,72 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
           <p className="text-gray-500 text-lg">{currentContent.noResults}</p>
         </div>
       ) : (
-        <CategoriesAndListings 
-          data={categoryProductsData}
-          loading={isLoading}
-          error={null}
-          showAllCategories={true}
-        />
+        <div className="space-y-8">
+          {groupedResults.map((group) => (
+            <div key={group.category.id} className="space-y-4">
+              <h2 className="text-xl font-semibold">
+                {group.category.id === 0 
+                  ? currentContent.allProducts 
+                  : `${currentContent.productsInCategory}: ${group.category.name}`}
+              </h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {group.products.map((product) => (
+                  <Card key={product.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="p-0">
+                      <div className="aspect-square relative">
+                        {product.image_url ? (
+                          <Image
+                            src={product.image_url}
+                            alt={product.name}
+                            fill
+                            className="object-cover rounded-t-lg"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <Search className="h-8 w-8 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <h3 className="font-medium text-lg mb-2">{product.name}</h3>
+                      <div className="space-y-1">
+                        {product.price && (
+                          <p className="text-sm">
+                            {currentContent.price}: <span className="font-medium">{product.price}</span>
+                          </p>
+                        )}
+                        {product.discount && (
+                          <p className="text-sm">
+                            {currentContent.discount}: <span className="font-medium">{product.discount}%</span>
+                          </p>
+                        )}
+                        {product.final_price && (
+                          <p className="text-sm">
+                            {currentContent.finalPrice}: <span className="font-medium text-red-600">{product.final_price}</span>
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="p-4 pt-0">
+                      <Link 
+                        href={`/product/${product.slug}`}
+                        className="w-full"
+                      >
+                        <Button variant="outline" className="w-full">
+                          {currentContent.viewDetails}
+                          <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </Link>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

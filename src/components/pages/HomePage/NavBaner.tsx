@@ -412,23 +412,24 @@ export default function NavBanner() {
     setActiveCategory(null);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      const params = new URLSearchParams();
-      params.append('q', searchTerm.trim());
-      
-      if (selectedCountry) {
-        params.append('country_id', selectedCountry.id.toString());
-      }
-      if (selectedCity) {
-        params.append('city_id', selectedCity.id.toString());
-      }
-      
-      router.push(`/search?${params.toString()}`);
-      setShowSearchResults(false);
+ // In NavBanner component
+const handleSearchSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (searchTerm.trim()) {
+    const params = new URLSearchParams();
+    params.append('q', searchTerm.trim());
+    
+    if (selectedCountry) {
+      params.append('country_id', selectedCountry.id.toString());
     }
-  };
+    if (selectedCity) {
+      params.append('city_id', selectedCity.id.toString());
+    }
+    
+    router.push(`/search?${params.toString()}`);
+    setShowSearchResults(false);
+  }
+};
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

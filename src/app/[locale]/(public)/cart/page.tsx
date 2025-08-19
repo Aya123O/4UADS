@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, X, Plus, Minus, ArrowRight, CheckCircle } from 'lucide-react';
+import { ShoppingCart, X, Plus, Minus, ArrowRight, CheckCircle, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/Context/LanguageContext';
@@ -59,6 +59,7 @@ interface CartItem {
   specDetail: string;
   specification_id: number | null;
   specification_detail_id: number | null;
+  whatsappNumber?: string;
   color?: string;
   fullProductData: {
     product: {
@@ -83,6 +84,7 @@ interface Order {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
+  whatsappNumber: string;
   status: 'pending' | 'completed' | 'cancelled';
 }
 
@@ -127,7 +129,8 @@ const cartContent = {
     orderTotal: "Order Total",
     pending: "Pending",
     completed: "Completed",
-    cancelled: "Cancelled"
+    cancelled: "Cancelled",
+    openWhatsApp: "Open WhatsApp"
   },
   ar: {
     title: "سلة التسوق الخاصة بك",
@@ -169,7 +172,8 @@ const cartContent = {
     orderTotal: "إجمالي الطلب",
     pending: "قيد الانتظار",
     completed: "مكتمل",
-    cancelled: "ملغى"
+    cancelled: "ملغى",
+    openWhatsApp: "فتح واتساب"
   }
 };
 
@@ -300,6 +304,9 @@ export default function CartPage() {
         throw new Error('Failed to place order');
       }
 
+      // Get the first WhatsApp number from cart items (assuming all items have same WhatsApp)
+      const whatsappNumber = cartItems[0]?.whatsappNumber || '';
+
       // Create order object for local storage
       const newOrder: Order = {
         id: Date.now().toString(),
@@ -309,12 +316,13 @@ export default function CartPage() {
         customerName,
         customerPhone,
         customerAddress,
+        whatsappNumber,
         status: 'pending'
       };
 
       // Save order to localStorage
       const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-      orders.unshift(newOrder); // Add new order to beginning of array
+      orders.unshift(newOrder);
       localStorage.setItem('orders', JSON.stringify(orders));
 
       // Clear cart
@@ -326,6 +334,21 @@ export default function CartPage() {
       // Show success
       setIsOrderSuccess(true);
       setIsCheckoutModalOpen(false);
+
+      // Prepare WhatsApp message
+      const orderSummary = newOrder.items.map(item => 
+        `- ${item.name} (${item.specDetail || ''}): ${item.quantity} × ${item.price.toLocaleString()} EGP = ${(item.price * item.quantity).toLocaleString()} EGP`
+      ).join('\n');
+
+      const whatsappMessage = encodeURIComponent(
+        Language === 'ar' 
+          ? `مرحبًا، لقد أكملت طلبًا جديدًا:\n\n${orderSummary}\n\nإجمالي الطلب: ${total.toLocaleString()} ج.م\n\nاسم العميل: ${customerName}\nرقم الهاتف: ${customerPhone}\nالعنوان: ${customerAddress}\n\nالرجاء تأكيد الطلب.`
+          : `Hello, I've completed a new order:\n\n${orderSummary}\n\nOrder Total: ${total.toLocaleString()} EGP\n\nCustomer Name: ${customerName}\nPhone: ${customerPhone}\nAddress: ${customerAddress}\n\nPlease confirm the order.`
+      );
+
+      // Open WhatsApp with the order details
+      window.open(`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`, '_blank');
+
     } catch (error) {
       console.error('Order error:', error);
       toast.error(content.orderError);
@@ -746,6 +769,27 @@ export default function CartPage() {
               >
                 {content.continueShopping}
               </Button>
+              {currentOrder.whatsappNumber && (
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    const orderSummary = currentOrder.items.map(item => 
+                      `- ${item.name} (${item.specDetail || ''}): ${item.quantity} × ${item.price.toLocaleString()} EGP = ${(item.price * item.quantity).toLocaleString()} EGP`
+                    ).join('\n');
+
+                    const whatsappMessage = encodeURIComponent(
+                      Language === 'ar' 
+                        ? `مرحبًا، لقد أكملت طلبًا جديدًا:\n\n${orderSummary}\n\nإجمالي الطلب: ${currentOrder.total.toLocaleString()} ج.م\n\nاسم العميل: ${currentOrder.customerName}\nرقم الهاتف: ${currentOrder.customerPhone}\nالعنوان: ${currentOrder.customerAddress}\n\nالرجاء تأكيد الطلب.`
+                        : `Hello, I've completed a new order:\n\n${orderSummary}\n\nOrder Total: ${currentOrder.total.toLocaleString()} EGP\n\nCustomer Name: ${currentOrder.customerName}\nPhone: ${currentOrder.customerPhone}\nAddress: ${currentOrder.customerAddress}\n\nPlease confirm the order.`
+                    );
+
+                    window.open(`https://wa.me/${currentOrder.whatsappNumber}?text=${whatsappMessage}`, '_blank');
+                  }}
+                >
+                  <MessageCircle className={`${isRTL ? 'ml-2' : 'mr-2'} w-4 h-4`} />
+                  {content.openWhatsApp}
+                </Button>
+              )}
             </div>
           </div>
         </div>

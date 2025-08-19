@@ -11,7 +11,9 @@ import {
   Twitter,
   Youtube,
   ChevronDown,
-  ShoppingCart
+  ShoppingCart,
+  User,
+  LogIn
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -26,17 +28,20 @@ const content = {
     phone: "هاتف",
     email: "بريد إلكتروني",
     location: "الموقع",
-    cart: "عربة التسوق"
+    cart: "عربة التسوق",
+    login: "تسجيل الدخول",
+    register: "إنشاء حساب"
   },
   en: {
     phone: "Phone",
     email: "Email",
     location: "Location",
-    cart: "Cart"
+    cart: "Cart",
+    login: "Login",
+    register: "Register"
   }
 };
 
-// Cart item type
 type CartItem = {
   id: string;
   name: string;
@@ -54,7 +59,6 @@ export default function Header() {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Initialize cart from localStorage
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -62,7 +66,6 @@ export default function Header() {
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
@@ -109,7 +112,6 @@ export default function Header() {
     setIsLanguageDropdownOpen(false);
   };
 
-  // Function to add item to cart
   const addToCart = (item: CartItem) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(i => i.id === item.id);
@@ -122,7 +124,6 @@ export default function Header() {
     });
   };
 
-  // Calculate total items in cart
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
@@ -138,7 +139,7 @@ export default function Header() {
             {businessInfo?.business_phone && (
               <a 
                 href={`tel:${businessInfo.business_phone}`}
-                className="flex items-center gap-1 hover:text-white transition-colors redspace-nowrap"
+                className="flex items-center gap-1 hover:text-white transition-colors whitespace-nowrap"
               >
                 <Phone className="h-3 w-3 text-white opacity-80 flex-shrink-0" />
                 <span>{businessInfo.business_phone}</span>
@@ -147,15 +148,15 @@ export default function Header() {
             {businessInfo?.business_email && (
               <a 
                 href={`mailto:${businessInfo.business_email}`}
-                className="flex items-center gap-1 hover:text-white transition-colors redspace-nowrap"
+                className="flex items-center gap-1 hover:text-white transition-colors whitespace-nowrap"
               >
-                <Mail className="h-3 w-3 text-white  opacity-80 flex-shrink-0" />
+                <Mail className="h-3 w-3 text-white opacity-80 flex-shrink-0" />
                 <span>{businessInfo.business_email}</span>
               </a>
             )}
             {businessInfo?.business_address && (
-              <div className="flex items-center gap-1 redspace-nowrap">
-                <MapPin className="h-3 w-3 text-white  opacity-80 flex-shrink-0" />
+              <div className="flex items-center gap-1 whitespace-nowrap">
+                <MapPin className="h-3 w-3 text-white opacity-80 flex-shrink-0" />
                 <span className="md:truncate max-w-[120px] md:max-w-[160px]">
                   {businessInfo.business_address[Language]}
                 </span>
@@ -163,7 +164,8 @@ export default function Header() {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Social Links */}
             <div className="flex items-center gap-2">
               {socialLinks.map((link) => (
                 <a 
@@ -187,9 +189,31 @@ export default function Header() {
               ))}
             </div>
 
+            {/* Auth Links - Enhanced Styling */}
+            <div className="flex items-center gap-3 border-l border-red-400 pl-3 ml-1">
+              <Link 
+                href="https://new.4youad.com/login" 
+                className="flex items-center gap-1.5 text-white hover:text-red-100 transition-colors group"
+              >
+                <User className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium">{currentContent.login}</span>
+              </Link>
+              <span className="text-white opacity-50">|</span>
+              <Link 
+                href="https://new.4youad.com/register" 
+                className="flex items-center gap-1.5 text-white hover:text-red-100 transition-colors group"
+              >
+                <LogIn className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium">{currentContent.register}</span>
+              </Link>
+            </div>
+
             {/* Cart Icon */}
-            <Link href="/cart" className="relative p-1 group">
-              <ShoppingCart className="h-4 w-4 text-white" />
+            <Link 
+              href="/cart" 
+              className="relative p-1 group border-l border-red-400 pl-3 ml-1"
+            >
+              <ShoppingCart className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-white text-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">
                   {cartItemCount}
@@ -199,12 +223,12 @@ export default function Header() {
             </Link>
 
             {/* Language Selector */}
-            <div className="relative border-l border-red-400 pl-2 ml-1">
+            <div className="relative border-l border-red-400 pl-3 ml-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={toggleLanguageDropdown}
-                className="text-white  h flex items-center gap-1 px-1 h-6"
+                className="text-white flex items-center gap-1 px-1 h-6 hover:bg-red-600 rounded-md"
               >
                 <Globe className="h-3 w-3" />
                 <span className="text-xs">{Language === "ar" ? "العربية" : "English"}</span>
@@ -212,13 +236,13 @@ export default function Header() {
               </Button>
               
               {isLanguageDropdownOpen && (
-                 <div className={`absolute ${Language === 'ar' ? 'right-0' : 'left-0'} mt-1 w-24 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-50`}>
+                <div className={`absolute ${Language === 'ar' ? 'right-0' : 'left-0'} mt-1 w-24 rounded-md shadow-lg bg-white ring-1 ring-gray-200 z-50`}>
                   <div className="py-1">
                     <button
                       onClick={() => changeLanguage("en")}
                       className={`block w-full text-left px-3 py-2 text-sm ${
                         Language === 'en' 
-                          ? 'bg-red-100 text-white-700 font-medium' 
+                          ? 'bg-red-100 text-red-700 font-medium' 
                           : 'text-gray-700 hover:bg-gray-50'
                       } transition-colors duration-150`}
                     >
@@ -228,7 +252,7 @@ export default function Header() {
                       onClick={() => changeLanguage("ar")}
                       className={`block w-full text-left px-3 py-2 text-sm ${
                         Language === 'ar' 
-                          ? 'bg-red-500 text-white-700 font-medium' 
+                          ? 'bg-red-100 text-red-700 font-medium' 
                           : 'text-gray-700 hover:bg-gray-50'
                       } transition-colors duration-150`}
                     >

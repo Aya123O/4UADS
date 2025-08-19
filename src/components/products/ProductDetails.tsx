@@ -169,6 +169,7 @@ interface CartItem {
   specDetail: string;
   specification_id?: number | null;
   specification_detail_id?: number | null;
+   whatsappNumber: string; 
   color?: string;
   fullProductData: {
     product: Product;
@@ -294,52 +295,53 @@ export default function ProductDetails() {
     setSelectedSpecs(newSpecs);
   };
 
-  const addToCart = (price: any) => {
-    if (!product) return;
-    
-    const cartItem: CartItem = {
-      id: Date.now(),
-      productId: product.id,
-      name: product.name[Language],
-      price: price.final_price,
-      quantity: quantities[price.id] || 1,
-      image: product.picture_url,
-      slug: product.slug,
-      specName: price.specification?.name[Language] || '',
-      specDetail: price.specification_detail?.name[Language] || '',
-      specification_id: price.specification_id, // Add this
-      specification_detail_id: price.specification_detail_id,
-      color: selectedColors[price.id],
-      fullProductData: {
-        product: product,
-        selectedPriceId: price.id
-      }
-    };
-
-    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existingItemIndex = existingCart.findIndex((item: CartItem) => 
-  item.productId === cartItem.productId && 
-  item.specification_id === cartItem.specification_id &&
-  item.specification_detail_id === cartItem.specification_detail_id
-);
-
-    if (existingItemIndex !== -1) {
-      existingCart[existingItemIndex].quantity += cartItem.quantity;
-    } else {
-      existingCart.push(cartItem);
+ const addToCart = (price: any) => {
+  if (!product) return;
+  
+  const cartItem: CartItem = {
+    id: Date.now(),
+    productId: product.id,
+    name: product.name[Language],
+    price: price.final_price,
+    quantity: quantities[price.id] || 1,
+    image: product.picture_url,
+    slug: product.slug,
+    specName: price.specification?.name[Language] || '',
+    specDetail: price.specification_detail?.name[Language] || '',
+    specification_id: price.specification_id,
+    specification_detail_id: price.specification_detail_id,
+    color: selectedColors[price.id],
+    whatsappNumber: product.whatsapp_number, // Add this line
+    fullProductData: {
+      product: product,
+      selectedPriceId: price.id
     }
-
-    localStorage.setItem('cart', JSON.stringify(existingCart));
-
-    toast({
-      title: Language === "ar" ? "تمت الإضافة إلى السلة" : "Added to Cart",
-      description: Language === "ar" 
-        ? `${cartItem.name} تمت إضافة إلى سلة التسوق` 
-        : `${cartItem.name} added to cart`,
-    });
-
-    window.dispatchEvent(new Event('cartUpdated'));
   };
+
+  const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const existingItemIndex = existingCart.findIndex((item: CartItem) => 
+    item.productId === cartItem.productId && 
+    item.specification_id === cartItem.specification_id &&
+    item.specification_detail_id === cartItem.specification_detail_id
+  );
+
+  if (existingItemIndex !== -1) {
+    existingCart[existingItemIndex].quantity += cartItem.quantity;
+  } else {
+    existingCart.push(cartItem);
+  }
+
+  localStorage.setItem('cart', JSON.stringify(existingCart));
+
+  toast({
+    title: Language === "ar" ? "تمت الإضافة إلى السلة" : "Added to Cart",
+    description: Language === "ar" 
+      ? `${cartItem.name} تمت إضافة إلى سلة التسوق` 
+      : `${cartItem.name} added to cart`,
+  });
+
+  window.dispatchEvent(new Event('cartUpdated'));
+};
 
   const increaseQuantity = (priceId: number) => {
     if (!product) return;
@@ -756,23 +758,50 @@ export default function ProductDetails() {
           )}
 
           {/* Contact Buttons */}
-          <div className="space-y-4 sticky bottom-4 bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-gray-100">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleShowPhoneNumber}
-                className="flex-1 h-14 bg-red-100 text-red-500 shadow-md hover:bg-red-200 transition-all"
-              >
-                <Phone className={`${Language === "ar" ? "ml-3" : "mr-3"} text-red-500`} size={20} />
-                {showPhoneNumber
-                  ? product.phone_number
-                  : Language === "ar"
-                  ? "إظهار رقم الهاتف"
-                  : "Show Phone Number"}
-              </Button>
+            {/* Contact Buttons */}
+<div className="space-y-4 sticky bottom-4 bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-gray-100">
+  <div className="flex flex-col sm:flex-row gap-3">
+    {/* Phone Button */}
+    <Button
+      onClick={handleShowPhoneNumber}
+      className={`flex-1 h-14 bg-red-100 text-red-500 shadow-md hover:bg-red-200 transition-all ${
+        Language === "ar" ? "flex-row-reverse" : "flex-row"
+      }`}
+    >
+      <Phone className={`${Language === "ar" ? "ml-3" : "mr-3"} text-red-500`} size={20} />
+      {showPhoneNumber
+        ? product.phone_number
+        : Language === "ar"
+        ? "إظهار رقم الهاتف"
+        : "Show Phone Number"}
+    </Button>
 
-             
-            </div>
-          </div>
+    {/* WhatsApp Button */}
+    {product.whatsapp_number && (
+      <Button
+        onClick={() => {
+          const productName = product.name[Language as "ar" | "en"];
+          const price = product.prices[0]?.final_price;
+          const currency = Language === "ar" ? "ج.م" : "EGP";
+          const productPrice = price ? `${price.toLocaleString()} ${currency}` : "";
+          
+          const message = encodeURIComponent(
+            Language === "ar" 
+              ? `مرحبًا، أنا مهتم بمنتجكم: ${productName}\n${productPrice ? `السعر: ${productPrice}\n` : ""}الرجاء إرسال مزيد من التفاصيل.\n\nرابط المنتج: ${window.location.href}`
+              : `Hello, I'm interested in your product: ${productName}\n${productPrice ? `Price: ${productPrice}\n` : ""}Please send me more details.\n\nProduct link: ${window.location.href}`
+          );
+          window.open(`https://wa.me/${product.whatsapp_number}?text=${message}`, '_blank');
+        }}
+        className={`flex-1 h-14 bg-green-100 text-green-600 shadow-md hover:bg-green-200 transition-all ${
+          Language === "ar" ? "flex-row-reverse" : "flex-row"
+        }`}
+      >
+        <MessageCircle className={`${Language === "ar" ? "ml-3" : "mr-3"} text-green-600`} size={20} />
+        {Language === "ar" ? "واتساب" : "WhatsApp"}
+      </Button>
+    )}
+  </div>
+</div>
         </div>
       </div>
 
@@ -916,7 +945,7 @@ export default function ProductDetails() {
                         href={`https://wa.me/${product.whatsapp_number}?text=${encodeURIComponent(
                           Language === "ar" 
                             ? `مرحبًا، أنا مهتم بمنتجكم: ${product.name.ar}`
-                            : `Hello, I'm interested in your product: ${product.name.en}`
+                            : `Hello, I'm interested in your product: ${product.name.en} `
                         )}`} 
                         target="_blank"
                         rel="noopener noreferrer"
