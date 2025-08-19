@@ -1,4 +1,3 @@
-// app/profile/[slug]/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,8 +5,8 @@ import { useLanguage } from "../../../../../Context/LanguageContext";
 import Image from "next/image";
 import { 
   MapPin, Mail, Phone, Globe, Facebook, Instagram, 
-  Twitter, Youtube, ShoppingBag, Briefcase,
-  User, CheckCircle, Info, Link, MessageSquare, AlertCircle
+  Twitter, Youtube, ShoppingBag, Briefcase, Star,
+  User, CheckCircle, Info, Link, MessageSquare, AlertCircle, Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -47,6 +46,71 @@ interface ProfileResponse {
       company_logo_url: string;
       company_banner_url: string;
     };
+    products: Array<{
+      id: number;
+      slug: string;
+      name: {
+        ar: string;
+        en: string | null;
+      };
+      quantity: number;
+      phone_number: string;
+      whatsapp_number: string | null;
+      main_category_id: number;
+      sub_category_id: number;
+      customer_id: number;
+      picture_url: string;
+      main_category: {
+        id: number;
+        slug: string;
+        name: {
+          ar: string;
+          en: string;
+        };
+        icon_url: string;
+      };
+      sub_category: {
+        id: number;
+        slug: string;
+        name: {
+          ar: string;
+          en: string;
+        };
+        icon_url: string;
+      };
+    }>;
+    services: Array<{
+      id: number;
+      slug: string;
+      name: {
+        ar: string;
+        en: string | null;
+      };
+      phone_number: string;
+      whatsapp_number: string | null;
+      main_category_id: number;
+      sub_category_id: number;
+      customer_id: number;
+      picture_url: string;
+      main_category: {
+        id: number;
+        slug: string;
+        name: {
+          ar: string;
+          en: string;
+        };
+        icon_url: string;
+      };
+      sub_category: {
+        id: number;
+        slug: string;
+        name: {
+          ar: string;
+          en: string;
+        };
+        icon_url: string;
+      };
+    }>;
   };
   message: string;
 }
@@ -55,6 +119,7 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
   const { Language: lang } = useLanguage();
   const [profileData, setProfileData] = useState<ProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('products');
 
   useEffect(() => {
     async function fetchProfileData() {
@@ -105,6 +170,8 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
 
   const seller = profileData.data;
   const company = seller.profile;
+  const products = seller.products || [];
+  const services = seller.services || [];
 
   const isValidUrl = (url: string | null): url is string => {
     if (!url) return false;
@@ -116,7 +183,6 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
     }
   };
 
-  // Safe company name access
   const getCompanyName = () => {
     if (!company?.company_name) return seller?.name || '';
     
@@ -148,12 +214,26 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
     return null;
   };
 
+  // Safe name access for products and services
+  const getName = (item: { name: { ar: string; en: string | null } | string }) => {
+    if (typeof item.name === 'string') {
+      return item.name;
+    }
+    
+    if (typeof item.name === 'object' && item.name !== null) {
+      return item.name[lang as keyof typeof item.name] || item.name.ar || '';
+    }
+    
+    return '';
+  };
+
   const translations = {
     basicInfo: lang === "ar" ? "المعلومات الأساسية" : "Basic Information",
     companyInfo: lang === "ar" ? "معلومات الشركة" : "Company Information",
     contactInfo: lang === "ar" ? "معلومات التواصل" : "Contact Information",
     socialMedia: lang === "ar" ? "وسائل التواصل الاجتماعي" : "Social Media",
     products: lang === "ar" ? "المنتجات" : "Products",
+    services: lang === "ar" ? "الخدمات" : "Services",
     name: lang === "ar" ? "الاسم" : "Name",
     email: lang === "ar" ? "البريد الإلكتروني" : "Email",
     phone: lang === "ar" ? "الهاتف" : "Phone",
@@ -174,17 +254,22 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
     whatsapp: lang === "ar" ? "واتساب" : "WhatsApp",
     noDescription: lang === "ar" ? "لا يوجد وصف متاح" : "No description available",
     noProducts: lang === "ar" ? "لا توجد منتجات متاحة حالياً" : "No products available currently",
+    noServices: lang === "ar" ? "لا توجد خدمات متاحة حالياً" : "No services available currently",
     comingSoon: lang === "ar" ? "سيتم عرض المنتجات هنا قريباً" : "Products will be displayed here soon",
     viewProfile: lang === "ar" ? "عرض الملف الشخصي" : "View Profile",
-    follow: lang === "ar" ? "متابعة" : "Follow",
-    share: lang === "ar" ? "مشاركة" : "Share",
-    about: lang === "ar" ? "حول" : "About",
-    services: lang === "ar" ? "الخدمات" : "Services",
-    reviews: lang === "ar" ? "التقييمات" : "Reviews",
-    gallery: lang === "ar" ? "معرض الصور" : "Gallery",
+  
+    
     businessHours: lang === "ar" ? "ساعات العمل" : "Business Hours",
     weekdays: lang === "ar" ? "السبت - الخميس" : "Saturday - Thursday",
-    friday: lang === "ar" ? "الجمعة" : "Friday"
+    friday: lang === "ar" ? "الجمعة" : "Friday",
+    quantity: lang === "ar" ? "الكمية" : "Quantity",
+    price: lang === "ar" ? "السعر" : "Price",
+    category: lang === "ar" ? "الفئة" : "Category",
+    subCategory: lang === "ar" ? "الفئة الفرعية" : "Sub Category",
+    viewDetails: lang === "ar" ? "عرض التفاصيل" : "View Details",
+    inStock: lang === "ar" ? "متوفر" : "In Stock",
+    outOfStock: lang === "ar" ? "غير متوفر" : "Out of Stock",
+    contactService: lang === "ar" ? "تواصل للخدمة" : "Contact for Service"
   };
 
   const formatPhoneNumber = (phone: string) => {
@@ -233,15 +318,26 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
       </div>
 
       {/* Navigation Tabs */}
-    
+      <div className="flex border-b mb-8">
+        <button
+          className={`px-4 py-3 font-medium text-lg ${activeTab === 'products' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('products')}
+        >
+          {translations.products} ({products.length})
+        </button>
+        <button
+          className={`px-4 py-3 font-medium text-lg ${activeTab === 'services' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('services')}
+        >
+          {translations.services} ({services.length})
+        </button>
+      </div>
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-8">
           
-          
-
           {/* Business Information */}
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <h2 className="text-2xl font-bold mb-6 pb-3 border-b flex items-center gap-2">
@@ -306,16 +402,147 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
             </div>
           </div>
 
-          {/* Products Section */}
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6 pb-3 border-b flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5" />
-              {translations.products}
-            </h2>
-            <div className="text-center py-12 text-gray-500">
-              <p>{translations.comingSoon}</p>
+          {/* Products/Services Section */}
+          {activeTab === 'products' ? (
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <h2 className="text-2xl font-bold mb-6 pb-3 border-b flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" />
+                {translations.products} ({products.length})
+              </h2>
+              
+              {products.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {products.map((product) => (
+                    <div key={product.id} className="border rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="relative h-48 w-full">
+                        <Image
+                          src={product.picture_url || "/assets/images/default-product.png"}
+                          alt={getName(product)}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-lg mb-2">{getName(product)}</h3>
+                        
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-gray-500">{translations.category}:</span>
+                          <span className="font-medium">{getName(product.main_category)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm text-gray-500">{translations.subCategory}:</span>
+                          <span className="font-medium">{getName(product.sub_category)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-sm text-gray-500">{translations.quantity}:</span>
+                          <span className={`font-medium ${product.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {product.quantity > 0 ? `${product.quantity} ${translations.inStock}` : translations.outOfStock}
+                          </span>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button size="sm" className="flex-1  bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all" asChild>
+                            <a href={`tel:${product.phone_number}`}>
+                              <Phone className="w-4 h-4" />
+                            </a>
+                          </Button>
+                          {product.whatsapp_number && (
+                            <Button size="sm" variant="outline" className="flex-1  bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all " asChild>
+                              <a href={`https://wa.me/${product.whatsapp_number}`} target="_blank" rel="noopener noreferrer">
+                                {translations.whatsapp}
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <ShoppingBag className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>{translations.noProducts}</p>
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <h2 className="text-2xl font-bold mb-6 pb-3 border-b flex items-center gap-2">
+                <Briefcase className="w-5 h-5" />
+                {translations.services} ({services.length})
+              </h2>
+              
+              {services.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6">
+                  {services.map((service) => (
+                    <div key={service.id} className="border rounded-xl overflow-hidden p-4 hover:shadow-md transition-shadow">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="relative h-40 w-full md:w-48 flex-shrink-0">
+                          <Image
+                            src={service.picture_url || "/assets/images/default-service.png"}
+                            alt={getName(service)}
+                            fill
+                            className="object-cover rounded-lg"
+                          />
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg mb-2">{getName(service)}</h3>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <div>
+                              <span className="text-sm text-gray-500">{translations.category}:</span>
+                              <p className="font-medium">{getName(service.main_category)}</p>
+                            </div>
+                            
+                            <div>
+                              <span className="text-sm text-gray-500">{translations.subCategory}:</span>
+                              <p className="font-medium">{getName(service.sub_category)}</p>
+                            </div>
+                            
+                            <div>
+                              <span className="text-sm text-gray-500">{translations.phone}:</span>
+                              <p className="font-medium">{formatPhoneNumber(service.phone_number)}</p>
+                            </div>
+                            
+                            {service.whatsapp_number && (
+                              <div>
+                                <span className="text-sm text-gray-500">{translations.whatsapp}:</span>
+                                <p className="font-medium">{formatPhoneNumber(service.whatsapp_number)}</p>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button size="sm" asChild className=" bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all">
+                              <a href={`tel:${service.phone_number}`}>
+                                <Phone className="w-4 h-4" />
+                                {translations.callNow}
+                              </a>
+                            </Button>
+                            {service.whatsapp_number && (
+                              <Button size="sm" variant="outline" asChild className=" bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all">
+                                <a href={`https://wa.me/${service.whatsapp_number}`} target="_blank" rel="noopener noreferrer">
+                                  {translations.whatsapp}
+                                </a>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Briefcase className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>{translations.noServices}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right Column */}
@@ -451,7 +678,8 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
 
           {/* Business Hours */}
           <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h3 className="font-bold text-lg mb-4">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5" />
               {translations.businessHours}
             </h3>
             <div className="space-y-2">

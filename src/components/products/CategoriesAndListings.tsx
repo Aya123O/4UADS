@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface Product {
   id: number;
   slug: string;
+  flag: string;
   name: {
     ar: string;
     en: string | null;
@@ -143,6 +144,21 @@ export default function CategoriesAndListings(_props: CategoriesAndListingsProps
         onKeyDown={(e) => e.key === 'Enter' && navigateToProduct(product.slug)}
         aria-label={product.name[Language] || 'Product'}
       >
+        {/* Flag Badge */}
+        {product.flag && (
+           <div className="absolute top-2 left-2 z-20">
+              <span className={`px-8 py-1 text-xs font-bold rounded-md ${
+                product.flag === "P" 
+                  ? "bg-red-500 text-white shadow-lg shadow-red-200 px-3" 
+                  : "bg-green-100 text-green-500 shadow-lg shadow-green-200 px-3"
+              }`}>
+                {product.flag === "P" 
+                  ? (Language === "ar" ? "منتج" : "Product") 
+                  : (Language === "ar" ? "خدمة" : "Service")}
+              </span>
+            </div>
+        )}
+
         <div className="relative aspect-square overflow-hidden flex-shrink-0">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-100 opacity-30 z-10"></div>
           {hasImage ? (

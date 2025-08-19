@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, X, Plus, Minus, ArrowRight, CheckCircle, MessageCircle } from 'lucide-react';
+import { ShoppingCart, X, Plus, Minus, ArrowRight, CheckCircle, MessageCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/Context/LanguageContext';
@@ -558,133 +558,152 @@ export default function CartPage() {
       
       {/* Checkout Modal */}
       {isCheckoutModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold">{content.checkoutTitle}</h3>
-                <button 
-                  onClick={() => setIsCheckoutModalOpen(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name" className="block mb-2">
-                    {content.name} <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    className={`w-full ${formErrors.name ? 'border-red-500' : ''}`}
-                    placeholder={Language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
-                  />
-                  {formErrors.name && (
-                    <p className="text-red-500 text-sm mt-1">{content.required}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="phone" className="block mb-2">
-                    {content.phone} <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    className={`w-full ${formErrors.phone ? 'border-red-500' : ''}`}
-                    placeholder={Language === 'ar' ? 'أدخل رقم هاتفك' : 'Enter your phone number'}
-                  />
-                  {formErrors.phone && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.phone === true ? content.required : content.invalidPhone}
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="address" className="block mb-2">
-                    {content.address} <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="address"
-                    value={customerAddress}
-                    onChange={(e) => setCustomerAddress(e.target.value)}
-                    className={`w-full ${formErrors.address ? 'border-red-500' : ''}`}
-                    placeholder={Language === 'ar' ? 'أدخل عنوانك' : 'Enter your address'}
-                  />
-                  {formErrors.address && (
-                    <p className="text-red-500 text-sm mt-1">{content.required}</p>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="notes" className="block mb-2">
-                    {content.notes}
-                  </Label>
-                  <Input
-                    id="notes"
-                    value={customerNotes}
-                    onChange={(e) => setCustomerNotes(e.target.value)}
-                    className="w-full"
-                    placeholder={Language === 'ar' ? 'ملاحظات حول التوصيل (اختياري)' : 'Delivery notes (optional)'}
-                  />
-                </div>
-                
-                <div className="pt-4 border-t border-gray-200">
-                  <h4 className="font-medium mb-3">{content.summary}</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>{content.subtotal}</span>
-                      <span>{subtotal.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{content.shipping}</span>
-                      <span className="text-green-600">{content.free}</span>
-                    </div>
-                    <div className="flex justify-between pt-2 border-t border-gray-200 font-bold">
-                      <span>{content.grandTotal}</span>
-                      <span>{total.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setIsCheckoutModalOpen(false)}
-                    disabled={isLoading}
-                  >
-                    {content.cancel}
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={handleCheckout}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center gap-2">
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        {content.confirmOrder}
-                      </div>
-                    ) : (
-                      content.confirmOrder
-                    )}
-                  </Button>
-                </div>
-              </div>
+         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div className="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold">{content.checkoutTitle}</h3>
+        <button 
+          onClick={() => setIsCheckoutModalOpen(false)}
+          className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+      
+      <div className="space-y-5">
+        <div>
+          <Label htmlFor="name" className="block mb-2.5 font-medium text-gray-700">
+            {content.name} <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${
+              formErrors.name 
+                ? 'border-red-500 focus:ring-red-200 focus:border-red-500' 
+                : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
+            } placeholder-gray-400`}
+            placeholder={Language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
+          />
+          {formErrors.name && (
+            <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {content.required}
+            </p>
+          )}
+        </div>
+        
+        <div>
+          <Label htmlFor="phone" className="block mb-2.5 font-medium text-gray-700">
+            {content.phone} <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="phone"
+            type="tel"
+            value={customerPhone}
+            onChange={(e) => setCustomerPhone(e.target.value)}
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${
+              formErrors.phone 
+                ? 'border-red-500 focus:ring-red-200 focus:border-red-500' 
+                : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
+            } placeholder-gray-400`}
+            placeholder={Language === 'ar' ? 'أدخل رقم هاتفك' : 'Enter your phone number'}
+          />
+          {formErrors.phone && (
+            <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {formErrors.phone === true ? content.required : content.invalidPhone}
+            </p>
+          )}
+        </div>
+        
+        <div>
+          <Label htmlFor="address" className="block mb-2.5 font-medium text-gray-700">
+            {content.address} <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="address"
+            value={customerAddress}
+            onChange={(e) => setCustomerAddress(e.target.value)}
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${
+              formErrors.address 
+                ? 'border-red-500 focus:ring-red-200 focus:border-red-500' 
+                : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
+            } placeholder-gray-400`}
+            placeholder={Language === 'ar' ? 'أدخل عنوانك' : 'Enter your address'}
+          />
+          {formErrors.address && (
+            <p className="text-red-500 text-sm mt-1.5 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              {content.required}
+            </p>
+          )}
+        </div>
+        
+        <div>
+          <Label htmlFor="notes" className="block mb-2.5 font-medium text-gray-700">
+            {content.notes}
+          </Label>
+          <Input
+            id="notes"
+            value={customerNotes}
+            onChange={(e) => setCustomerNotes(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 transition-all duration-200 focus:ring-2 focus:ring-blue-200 focus:ring-offset-2 focus:border-blue-500 placeholder-gray-400"
+            placeholder={Language === 'ar' ? 'ملاحظات حول التوصيل (اختياري)' : 'Delivery notes (optional)'}
+          />
+        </div>
+        
+        <div className="pt-5 border-t border-gray-200">
+          <h4 className="font-semibold mb-4 text-gray-800">{content.summary}</h4>
+          <div className="space-y-2.5">
+            <div className="flex justify-between text-gray-600">
+              <span>{content.subtotal}</span>
+              <span>{subtotal.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>{content.shipping}</span>
+              <span className="text-green-600 font-medium">{content.free}</span>
+            </div>
+            <div className="flex justify-between pt-3 border-t border-gray-200 font-bold text-lg text-gray-900">
+              <span>{content.grandTotal}</span>
+              <span>{total.toLocaleString()} {Language === "ar" ? "ج.م" : "EGP"}</span>
             </div>
           </div>
         </div>
+        
+        <div className="flex gap-3 pt-5">
+          <Button
+            variant="outline"
+            className="flex-1 py-3 rounded-lg border-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+            onClick={() => setIsCheckoutModalOpen(false)}
+            disabled={isLoading}
+          >
+            {content.cancel}
+          </Button>
+          <Button
+            className="flex-1 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg"
+            onClick={handleCheckout}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {content.confirmOrder}
+              </div>
+            ) : (
+              content.confirmOrder
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
       )}
       
       {/* Order Success Modal */}
