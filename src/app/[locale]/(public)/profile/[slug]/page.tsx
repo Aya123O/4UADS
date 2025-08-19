@@ -225,16 +225,7 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
                 <h1 className="text-3xl font-bold text-white">
                   {getCompanyName()}
                 </h1>
-                <div className="flex items-center gap-4 mt-2">
-                  <p className="text-gray-200 flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5" />
-                    <span>{translations.verifiedSeller}</span>
-                  </p>
-                  <p className={`flex items-center gap-2 ${seller.is_active ? 'text-green-300' : 'text-red-300'}`}>
-                    <CheckCircle className="w-5 h-5" />
-                    <span>{seller.is_active ? translations.active : translations.inactive}</span>
-                  </p>
-                </div>
+               
               </div>
             </div>
           </div>
@@ -242,46 +233,14 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b mb-8">
-        <button className={`px-4 py-3 font-medium ${lang === "ar" ? 'ml-2' : 'mr-2'}`}>
-          {translations.about}
-        </button>
-        <button className={`px-4 py-3 font-medium ${lang === "ar" ? 'ml-2' : 'mr-2'}`}>
-          {translations.services}
-        </button>
-        <button className={`px-4 py-3 font-medium ${lang === "ar" ? 'ml-2' : 'mr-2'}`}>
-          {translations.products}
-        </button>
-        <button className={`px-4 py-3 font-medium ${lang === "ar" ? 'ml-2' : 'mr-2'}`}>
-          {translations.reviews}
-        </button>
-        <button className={`px-4 py-3 font-medium ${lang === "ar" ? 'ml-2' : 'mr-2'}`}>
-          {translations.gallery}
-        </button>
-      </div>
+    
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-8">
-          {/* About Section */}
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold mb-6 pb-3 border-b flex items-center gap-2">
-              <Info className="w-5 h-5" />
-              {translations.about}
-            </h2>
-            
-            {getCompanyDescription() ? (
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {getCompanyDescription()}
-              </p>
-            ) : (
-              <div className="flex items-center gap-2 text-gray-500">
-                <AlertCircle className="w-5 h-5" />
-                <p>{translations.noDescription}</p>
-              </div>
-            )}
-          </div>
+          
+          
 
           {/* Business Information */}
           <div className="bg-white rounded-2xl shadow-sm p-6">
@@ -481,9 +440,8 @@ export default function ProfilePage({ params }: { params: { slug: string } }) {
               </Button>
 
               {company.company_whatsapp && (
-                <Button variant="outline" className="w-full" asChild>
+                <Button variant="outline" className="w-full  bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all" asChild>
                   <a href={`https://wa.me/${company.company_whatsapp}`} target="_blank" rel="noopener noreferrer">
-                    <span className={`${lang === "ar" ? "ml-2" : "mr-2"} font-bold text-green-600`}>WA</span>
                     {translations.whatsapp}
                   </a>
                 </Button>

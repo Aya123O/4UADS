@@ -928,7 +928,7 @@ function ProductCard({ product, language, isRTL, onQuickView, onWhatsAppClick, n
               className={`w-full py-3.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-slow ${
                 product.quantity > 0 
                   ? 'bg-green-100 text-green-700 hover:bg-green-200 shadow-md transition-all'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : 'bg-green-100 text-green-700   hover:bg-green-200 shadow-md transition-all'
               }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">

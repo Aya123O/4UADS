@@ -496,10 +496,7 @@ export default function ProductDetails() {
                   {Math.max(...product.prices.map(p => p.discount))}% {Language === "ar" ? "خصم" : "OFF"}
                 </div>
               )}
-              <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm">
-                <Eye className="w-4 h-4 mr-1" />
-                {product.views || 0} {Language === "ar" ? "مشاهدات" : "views"}
-              </Badge>
+              
             </div>
             
             <button 
@@ -511,9 +508,7 @@ export default function ProductDetails() {
               />
             </button>
             
-            <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:bg-white transition-all hover:scale-110">
-              <Share2 className="w-6 h-6 text-gray-600" />
-            </button>
+            
           </div>
         </div>
 
@@ -525,16 +520,7 @@ export default function ProductDetails() {
                 {product.name[Language]}
               </h1>
               
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-1">
-                  {renderStars()}
-                </div>
-                
-                <span className="text-sm text-gray-500 flex items-center">
-                  <Clock className="w-4 h-4 mr-1" />
-                  {formatDate(product.created_at)}
-                </span>
-              </div>
+             
             </div>
           </div>
 
